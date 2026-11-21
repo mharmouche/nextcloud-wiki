@@ -1,0 +1,2022 @@
+<!DOCTYPE html>
+<html lang="fr" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Wiki Nextcloud : Déploiement de A à Z | nextcloud-wiki.mohamedharmouche.fr</title>
+  <meta
+    name="description"
+    content="Wiki technique bilingue (FR/EN) et atelier pratique pour déployer Nextcloud sur VMware, Debian 12 (Bookworm), Docker, Nginx Proxy Manager et DuckDNS."
+  />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap"
+    rel="stylesheet"
+  />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    // Configure Tailwind CSS with class-based dark mode and custom palette
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+            mono: ['JetBrains Mono', 'ui-monospace', 'SFMono-Regular', 'monospace']
+          },
+          colors: {
+            brand: {
+              50: '#f0f9ff',
+              100: '#e0f2fe',
+              400: '#38bdf8',
+              500: '#0ea5e9',
+              600: '#0284c7',
+              700: '#0369a1',
+              900: '#0c4a6e'
+            }
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    :root {
+      --bg-page: #f8fafc;
+      --bg-surface: #ffffff;
+      --bg-muted: #f1f5f9;
+      --text-main: #0f172a;
+      --text-muted: #475569;
+      --border-subtle: #e2e8f0;
+      --student-bg: #fffbeb;
+      --student-border: #f59e0b;
+      --student-text: #451a03;
+    }
+
+    html.dark {
+      --bg-page: #0b1120;
+      --bg-surface: #111827;
+      --bg-muted: #1e293b;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --border-subtle: #1f2937;
+      --student-bg: rgba(120, 53, 15, 0.25);
+      --student-border: #d97706;
+      --student-text: #fef3c7;
+    }
+
+    body {
+      background-color: var(--bg-page);
+      color: var(--text-main);
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    }
+
+    code, pre, kbd {
+      font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
+    }
+
+    /* Bilingual visibility controlled by html[lang] */
+    html[lang="fr"] .lang-en {
+      display: none !important;
+    }
+    html[lang="en"] .lang-fr {
+      display: none !important;
+    }
+
+    /* High School / Beginner Mode callouts (.student-detail) */
+    body:not(.student-mode) .student-detail {
+      display: none !important;
+    }
+    body.student-mode .student-detail {
+      display: block;
+      background-color: var(--student-bg);
+      border-left: 4px solid var(--student-border);
+      color: var(--student-text);
+    }
+
+    /* Search filtering */
+    .search-hidden {
+      display: none !important;
+    }
+
+    /* Subtle scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(100, 116, 139, 0.35);
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(100, 116, 139, 0.55);
+    }
+  </style>
+</head>
+<body class="min-h-screen antialiased selection:bg-brand-500/20 selection:text-brand-600 dark:selection:text-brand-300">
+
+  <!-- ===================================================================== -->
+  <!-- HEADER BAR                                                            -->
+  <!-- ===================================================================== -->
+  <header class="sticky top-0 z-40 border-b border-slate-200/90 dark:border-slate-800/90 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md">
+    <div class="max-w-7xl mx-auto min-h-16 px-3 sm:px-6 py-2 flex flex-wrap items-center justify-between gap-2">
+      <!-- Brand + Mobile Sidebar Toggle -->
+      <div class="flex items-center gap-2.5 min-w-0">
+        <button
+          id="sidebar-toggle"
+          type="button"
+          aria-label="Toggle navigation sidebar"
+          class="lg:hidden p-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition shrink-0"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </button>
+
+        <a href="#top" class="flex items-center gap-2.5 min-w-0 group">
+          <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-brand-500 to-indigo-600 flex items-center justify-center text-white font-extrabold text-sm shadow-sm shrink-0">
+            NC
+          </div>
+          <div class="min-w-0">
+            <div class="text-sm sm:text-base font-extrabold tracking-tight text-slate-900 dark:text-white truncate group-hover:text-brand-600 dark:group-hover:text-brand-400 transition">
+              <span class="lang-fr">Nextcloud de A à Z</span>
+              <span class="lang-en">Nextcloud End-to-End</span>
+            </div>
+            <div class="text-[11px] font-mono text-slate-500 dark:text-slate-400 truncate">
+              nextcloud-wiki.mohamedharmouche.fr
+            </div>
+          </div>
+        </a>
+      </div>
+
+      <!-- Dual View Switcher: Wiki Technique | Atelier Pratique -->
+      <div role="tablist" aria-label="View mode switcher" class="inline-flex items-center p-0.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+        <button
+          id="tab-wiki"
+          type="button"
+          role="tab"
+          aria-selected="true"
+          data-view-tab="wiki"
+          class="view-tab-btn px-3 py-1.5 rounded-lg text-xs font-bold transition"
+        >
+          <span class="lang-fr">Wiki Technique</span>
+          <span class="lang-en">Technical Wiki</span>
+        </button>
+        <button
+          id="tab-lab"
+          type="button"
+          role="tab"
+          aria-selected="false"
+          data-view-tab="lab"
+          class="view-tab-btn px-3 py-1.5 rounded-lg text-xs font-bold transition"
+        >
+          <span class="lang-fr">Atelier Pratique</span>
+          <span class="lang-en">Practical Lab</span>
+        </button>
+      </div>
+
+      <!-- Right Controls: FR | EN, Mode Lycéen / Débutant, Progress Badge, Dark/Light -->
+      <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
+        <!-- Language Toggle -->
+        <div role="group" aria-label="Language switcher" class="inline-flex items-center p-0.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+          <button
+            type="button"
+            data-lang-choice="fr"
+            class="lang-btn px-2.5 py-1 rounded-lg text-xs font-bold transition"
+          >
+            FR
+          </button>
+          <button
+            type="button"
+            data-lang-choice="en"
+            class="lang-btn px-2.5 py-1 rounded-lg text-xs font-bold transition"
+          >
+            EN
+          </button>
+        </div>
+
+        <!-- Mode Lycéen / Débutant Toggle -->
+        <button
+          id="student-toggle"
+          type="button"
+          aria-pressed="false"
+          class="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-semibold border transition"
+        >
+          <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 14l9-5-9-5-9 5 9 5z" />
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" />
+          </svg>
+          <span class="hidden md:inline lang-fr">Mode Lycéen / Débutant</span>
+          <span class="hidden md:inline lang-en">High School / Beginner Mode</span>
+          <span class="md:hidden lang-fr">Lycéen</span>
+          <span class="md:hidden lang-en">Beginner</span>
+        </button>
+
+        <!-- Checklist Progress Badge -->
+        <span
+          id="progress-badge"
+          class="hidden sm:inline-flex items-center px-2.5 py-1 rounded-xl text-xs font-mono font-semibold bg-brand-50 dark:bg-brand-950/60 text-brand-700 dark:text-brand-300 border border-brand-200/80 dark:border-brand-800/70"
+        >
+          0 / 9
+        </span>
+
+        <!-- Dark / Light Theme Toggle -->
+        <button
+          id="theme-toggle"
+          type="button"
+          aria-label="Toggle dark or light theme"
+          class="p-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition"
+        >
+          <svg id="icon-sun" class="w-4 h-4 hidden dark:block text-amber-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+          </svg>
+          <svg id="icon-moon" class="w-4 h-4 block dark:hidden text-slate-700" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Mobile Sidebar Backdrop -->
+  <div id="sidebar-backdrop" class="fixed inset-0 z-30 bg-slate-950/50 backdrop-blur-xs hidden lg:hidden"></div>
+
+  <!-- ===================================================================== -->
+  <!-- MAIN WORKSPACE (SIDEBAR + ACTIVE VIEW + SHARED CHECKLIST)           -->
+  <!-- ===================================================================== -->
+  <div id="top" class="max-w-7xl mx-auto px-3 sm:px-6 py-6 lg:py-8 flex flex-col lg:flex-row gap-6 lg:gap-8">
+
+    <!-- SIDEBAR -->
+    <aside
+      id="sidebar"
+      class="fixed lg:sticky top-20 lg:top-24 left-0 z-30 h-[calc(100vh-5rem)] lg:h-[calc(100vh-7rem)] w-72 shrink-0 bg-white dark:bg-slate-900 lg:bg-transparent lg:dark:bg-transparent border-r lg:border border-slate-200 dark:border-slate-800 lg:rounded-2xl p-4 overflow-y-auto -translate-x-full lg:translate-x-0 transition-transform duration-200"
+    >
+      <!-- Instant Search Input -->
+      <div class="mb-4">
+        <label for="wiki-search" class="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
+          <span class="lang-fr">Recherche instantanée</span>
+          <span class="lang-en">Instant Search</span>
+        </label>
+        <div class="relative">
+          <input
+            id="wiki-search"
+            type="search"
+            autocomplete="off"
+            placeholder="Filtrer (Debian, 443, PuTTY...)"
+            class="w-full pl-9 pr-8 py-2 text-xs sm:text-sm rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500"
+          />
+          <svg class="w-4 h-4 text-slate-400 absolute left-3 top-2.5 pointer-events-none" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35M17 10a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+          <button
+            id="clear-search"
+            type="button"
+            aria-label="Clear search query"
+            class="hidden absolute right-2 top-2 p-0.5 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+        <p id="search-status" class="mt-1.5 text-[11px] text-slate-500 dark:text-slate-400 hidden"></p>
+      </div>
+
+      <!-- TOC: Wiki Technique -->
+      <div id="toc-wiki">
+        <div class="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">
+          <span class="lang-fr">Sommaire du wiki</span>
+          <span class="lang-en">Wiki Contents</span>
+        </div>
+        <nav aria-label="Wiki table of contents" class="space-y-1 text-xs sm:text-sm">
+          <a href="#sec-1" data-nav="sec-1" class="toc-link flex items-center gap-2 px-3 py-2 rounded-xl text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+            <span class="font-mono text-xs text-brand-600 dark:text-brand-400">01</span>
+            <span class="lang-fr truncate">Architecture &amp; Flux</span>
+            <span class="lang-en truncate">Architecture &amp; Flow</span>
+          </a>
+          <a href="#sec-2" data-nav="sec-2" class="toc-link flex items-center gap-2 px-3 py-2 rounded-xl text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+            <span class="font-mono text-xs text-brand-600 dark:text-brand-400">02</span>
+            <span class="lang-fr truncate">Debian 12 Netinst &amp; sudo</span>
+            <span class="lang-en truncate">Debian 12 Netinst &amp; sudo</span>
+          </a>
+          <a href="#sec-3" data-nav="sec-3" class="toc-link flex items-center gap-2 px-3 py-2 rounded-xl text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+            <span class="font-mono text-xs text-brand-600 dark:text-brand-400">03</span>
+            <span class="lang-fr truncate">IP Statique &amp; Réseau</span>
+            <span class="lang-en truncate">Static IP &amp; Network</span>
+          </a>
+          <a href="#sec-4" data-nav="sec-4" class="toc-link flex items-center gap-2 px-3 py-2 rounded-xl text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+            <span class="font-mono text-xs text-brand-600 dark:text-brand-400">04</span>
+            <span class="lang-fr truncate">DuckDNS (DynDNS)</span>
+            <span class="lang-en truncate">DuckDNS (DynDNS)</span>
+          </a>
+          <a href="#sec-5" data-nav="sec-5" class="toc-link flex items-center gap-2 px-3 py-2 rounded-xl text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+            <span class="font-mono text-xs text-brand-600 dark:text-brand-400">05</span>
+            <span class="lang-fr truncate">Docker Engine &amp; Compose</span>
+            <span class="lang-en truncate">Docker Engine &amp; Compose</span>
+          </a>
+          <a href="#sec-6" data-nav="sec-6" class="toc-link flex items-center gap-2 px-3 py-2 rounded-xl text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+            <span class="font-mono text-xs text-brand-600 dark:text-brand-400">06</span>
+            <span class="lang-fr truncate">Ports Box 80 &amp; 443</span>
+            <span class="lang-en truncate">Router Ports 80 &amp; 443</span>
+          </a>
+          <a href="#sec-7" data-nav="sec-7" class="toc-link flex items-center gap-2 px-3 py-2 rounded-xl text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+            <span class="font-mono text-xs text-brand-600 dark:text-brand-400">07</span>
+            <span class="lang-fr truncate">Stack Docker (.env &amp; Compose)</span>
+            <span class="lang-en truncate">Docker Stack (.env &amp; Compose)</span>
+          </a>
+          <a href="#sec-8" data-nav="sec-8" class="toc-link flex items-center gap-2 px-3 py-2 rounded-xl text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+            <span class="font-mono text-xs text-brand-600 dark:text-brand-400">08</span>
+            <span class="lang-fr truncate">Nginx Proxy Manager &amp; SSL</span>
+            <span class="lang-en truncate">Nginx Proxy Manager &amp; SSL</span>
+          </a>
+          <a href="#sec-9" data-nav="sec-9" class="toc-link flex items-center gap-2 px-3 py-2 rounded-xl text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+            <span class="font-mono text-xs text-brand-600 dark:text-brand-400">09</span>
+            <span class="lang-fr truncate">Connexion Nextcloud &amp; Tests</span>
+            <span class="lang-en truncate">Nextcloud Login &amp; Checks</span>
+          </a>
+        </nav>
+      </div>
+
+      <!-- TOC: Atelier Pratique -->
+      <div id="toc-lab" class="hidden">
+        <div class="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">
+          <span class="lang-fr">Modules de l'atelier</span>
+          <span class="lang-en">Practical Lab Modules</span>
+        </div>
+        <nav aria-label="Practical lab table of contents" class="space-y-1 text-xs sm:text-sm">
+          <a href="#lab-1" data-nav="lab-1" class="toc-link flex items-center gap-2 px-3 py-2 rounded-xl text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+            <span class="font-mono text-xs text-brand-600 dark:text-brand-400">L1</span>
+            <span class="lang-fr truncate">VMware &amp; Réseau Bridged</span>
+            <span class="lang-en truncate">VMware &amp; Bridged Network</span>
+          </a>
+          <a href="#lab-2" data-nav="lab-2" class="toc-link flex items-center gap-2 px-3 py-2 rounded-xl text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+            <span class="font-mono text-xs text-brand-600 dark:text-brand-400">L2</span>
+            <span class="lang-fr truncate">Snapshots &amp; Restauration</span>
+            <span class="lang-en truncate">Snapshots &amp; Rollback</span>
+          </a>
+          <a href="#lab-3" data-nav="lab-3" class="toc-link flex items-center gap-2 px-3 py-2 rounded-xl text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+            <span class="font-mono text-xs text-brand-600 dark:text-brand-400">L3</span>
+            <span class="lang-fr truncate">VM Debian 12 &amp; SSH</span>
+            <span class="lang-en truncate">Debian 12 VM &amp; SSH</span>
+          </a>
+          <a href="#lab-4" data-nav="lab-4" class="toc-link flex items-center gap-2 px-3 py-2 rounded-xl text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+            <span class="font-mono text-xs text-brand-600 dark:text-brand-400">L4</span>
+            <span class="lang-fr truncate">Box, Ports, CGNAT &amp; 4G/NAT</span>
+            <span class="lang-en truncate">Router Ports, CGNAT &amp; 4G/NAT</span>
+          </a>
+          <a href="#lab-5" data-nav="lab-5" class="toc-link flex items-center gap-2 px-3 py-2 rounded-xl text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+            <span class="font-mono text-xs text-brand-600 dark:text-brand-400">L5</span>
+            <span class="lang-fr truncate">PuTTY &amp; Windows Terminal</span>
+            <span class="lang-en truncate">PuTTY &amp; Windows Terminal</span>
+          </a>
+          <a href="#lab-6" data-nav="lab-6" class="toc-link flex items-center gap-2 px-3 py-2 rounded-xl text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+            <span class="font-mono text-xs text-brand-600 dark:text-brand-400">L6</span>
+            <span class="lang-fr truncate">Nginx Proxy Manager &amp; Captures</span>
+            <span class="lang-en truncate">Nginx Proxy Manager &amp; Screens</span>
+          </a>
+        </nav>
+      </div>
+
+      <!-- Checklist Shortcut -->
+      <div class="mt-4 pt-3 border-t border-slate-200 dark:border-slate-800">
+        <a href="#checklist-summary" data-nav="checklist-summary" class="toc-link flex items-center gap-2 px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold text-brand-700 dark:text-brand-300 bg-brand-50/80 dark:bg-brand-950/40 hover:bg-brand-100/80 dark:hover:bg-brand-900/50 transition">
+          <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <span class="lang-fr truncate">Checklist de validation</span>
+          <span class="lang-en truncate">Validation Checklist</span>
+        </a>
+      </div>
+    </aside>
+
+    <!-- MAIN CONTENT COLUMN -->
+    <main class="flex-1 min-w-0 space-y-8">
+
+      <!-- ================================================================= -->
+      <!-- VIEW 1: WIKI TECHNIQUE                                            -->
+      <!-- ================================================================= -->
+      <div id="view-wiki" class="space-y-8">
+
+        <!-- Hero Section -->
+        <div class="rounded-3xl p-6 sm:p-8 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs">
+          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-brand-50 dark:bg-brand-950/60 text-brand-700 dark:text-brand-300 border border-brand-200/80 dark:border-brand-800/70 mb-4">
+            <span>nextcloud-wiki.mohamedharmouche.fr</span>
+          </div>
+          <h1 class="text-2xl sm:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white leading-tight">
+            <span class="lang-fr">Déployer Nextcloud de A à Z : VMware, Debian 12, Docker, Nginx Proxy Manager et DuckDNS</span>
+            <span class="lang-en">Deploy Nextcloud End-to-End: VMware, Debian 12, Docker, Nginx Proxy Manager &amp; DuckDNS</span>
+          </h1>
+          <p class="mt-3 text-sm sm:text-base text-slate-600 dark:text-slate-300 leading-relaxed max-w-3xl">
+            <span class="lang-fr">Guide technique bilingue pour héberger Nextcloud sur une VM Debian 12 (Bookworm) en mode <strong>Bridged</strong>, isolée sur le réseau Docker <code class="text-brand-700 dark:text-brand-300">proxy-net</code> avec MariaDB, Redis, DuckDNS et Nginx Proxy Manager. Activez le <strong>Mode Lycéen / Débutant</strong> pour afficher des repères structurés (<em>Action / Pourquoi / Contrôle</em>) ou ouvrez l'onglet <strong>Atelier Pratique</strong>.</span>
+            <span class="lang-en">Bilingual technical guide to self-host Nextcloud on a <strong>Bridged</strong> Debian 12 (Bookworm) VM using Docker network <code class="text-brand-700 dark:text-brand-300">proxy-net</code>, MariaDB, Redis, DuckDNS, and Nginx Proxy Manager. Enable <strong>High School / Beginner Mode</strong> for structured callouts (<em>Action / Why / Check</em>) or open the <strong>Practical Lab</strong> tab.</span>
+          </p>
+        </div>
+
+        <!-- SECTION 01: ARCHITECTURE & FLOW DIAGRAM -->
+        <section id="sec-1" data-searchable class="wiki-section rounded-3xl p-6 sm:p-8 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs space-y-6">
+          <div class="flex flex-wrap items-start justify-between gap-4 border-b border-slate-100 dark:border-slate-800 pb-4">
+            <div>
+              <span class="text-xs font-mono font-bold uppercase tracking-wider text-brand-600 dark:text-brand-400">
+                <span class="lang-fr">Section 01</span>
+                <span class="lang-en">Section 01</span>
+              </span>
+              <h2 class="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white mt-0.5">
+                <span class="lang-fr">Architecture globale et flux réseau</span>
+                <span class="lang-en">System Architecture &amp; Network Flow</span>
+              </h2>
+            </div>
+            <label class="inline-flex items-center gap-2 text-xs font-medium text-slate-600 dark:text-slate-300 cursor-pointer select-none bg-slate-50 dark:bg-slate-800/80 px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700">
+              <input type="checkbox" data-step-key="wiki-1" class="step-checkbox rounded text-brand-600 focus:ring-brand-500 w-4 h-4" />
+              <span class="lang-fr">Validé</span>
+              <span class="lang-en">Done</span>
+            </label>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs sm:text-sm">
+            <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80">
+              <h3 class="font-bold text-slate-900 dark:text-white">
+                <span class="lang-fr">1. Hyperviseur VMware (Bridged) &amp; Debian 12</span>
+                <span class="lang-en">1. VMware Hypervisor (Bridged) &amp; Debian 12</span>
+              </h3>
+              <p class="mt-1.5 text-slate-600 dark:text-slate-300 leading-relaxed">
+                <span class="lang-fr">La machine virtuelle Debian 12 (Bookworm) est rattachée au réseau local en <strong>Bridged</strong> afin d'obtenir une adresse IP dédiée sur votre LAN.</span>
+                <span class="lang-en">The Debian 12 (Bookworm) VM uses <strong>Bridged</strong> networking so it receives its own IP address directly on your LAN.</span>
+              </p>
+            </div>
+
+            <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80">
+              <h3 class="font-bold text-slate-900 dark:text-white">
+                <span class="lang-fr">2. DuckDNS &amp; Box NAT (Ports 80 / 443)</span>
+                <span class="lang-en">2. DuckDNS &amp; Router NAT (Ports 80 / 443)</span>
+              </h3>
+              <p class="mt-1.5 text-slate-600 dark:text-slate-300 leading-relaxed">
+                <span class="lang-fr">DuckDNS suit l'IP publique de votre box ; la box redirige uniquement les ports TCP <code class="text-brand-700 dark:text-brand-300">80</code> et <code class="text-brand-700 dark:text-brand-300">443</code> vers la VM (jamais le port <code class="text-brand-700 dark:text-brand-300">81</code>).</span>
+                <span class="lang-en">DuckDNS tracks your router's public IP; your router forwards only TCP ports <code class="text-brand-700 dark:text-brand-300">80</code> and <code class="text-brand-700 dark:text-brand-300">443</code> to the VM (never port <code class="text-brand-700 dark:text-brand-300">81</code>).</span>
+              </p>
+            </div>
+
+            <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80">
+              <h3 class="font-bold text-slate-900 dark:text-white">
+                <span class="lang-fr">3. Nginx Proxy Manager SSL &amp; proxy-net</span>
+                <span class="lang-en">3. Nginx Proxy Manager SSL &amp; proxy-net</span>
+              </h3>
+              <p class="mt-1.5 text-slate-600 dark:text-slate-300 leading-relaxed">
+                <span class="lang-fr">Nginx Proxy Manager délivre le certificat Let's Encrypt, force le HTTPS et relaie le trafic vers <code class="text-brand-700 dark:text-brand-300">nextcloud-app:80</code> via le réseau Docker <code class="text-brand-700 dark:text-brand-300">proxy-net</code>.</span>
+                <span class="lang-en">Nginx Proxy Manager provisions Let's Encrypt TLS certificates, enforces HTTPS, and proxies requests to <code class="text-brand-700 dark:text-brand-300">nextcloud-app:80</code> over Docker network <code class="text-brand-700 dark:text-brand-300">proxy-net</code>.</span>
+              </p>
+            </div>
+
+            <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80">
+              <h3 class="font-bold text-slate-900 dark:text-white">
+                <span class="lang-fr">4. Nextcloud + MariaDB isolée + Redis</span>
+                <span class="lang-en">4. Nextcloud + Isolated MariaDB + Redis</span>
+              </h3>
+              <p class="mt-1.5 text-slate-600 dark:text-slate-300 leading-relaxed">
+                <span class="lang-fr">Nextcloud fonctionne avec une base MariaDB dédiée sur volume persistant et Redis pour accélérer le cache applicatif et le verrouillage des fichiers.</span>
+                <span class="lang-en">Nextcloud pairs with a dedicated MariaDB database on a persistent volume plus Redis for fast caching and transactional file locking.</span>
+              </p>
+            </div>
+          </div>
+
+          <!-- Architecture SVG Diagram -->
+          <div class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-950 p-4 overflow-x-auto">
+            <div class="text-xs font-mono text-slate-400 mb-2">
+              <span class="lang-fr">Schéma d'architecture : 4G/5G → DuckDNS → Box NAT 80/443 → VMware Bridged → NPM SSL → Nextcloud + MariaDB + Redis + DuckDNS</span>
+              <span class="lang-en">Architecture Diagram: 4G/5G → DuckDNS → Box NAT 80/443 → VMware Bridged → NPM SSL → Nextcloud + MariaDB + Redis + DuckDNS</span>
+            </div>
+            <svg viewBox="0 0 960 250" class="w-full min-w-[740px] h-auto select-none" role="img" aria-label="Nextcloud deployment flow diagram">
+              <!-- 4G/5G -->
+              <rect x="14" y="34" width="145" height="74" rx="12" fill="#0f172a" stroke="#38bdf8" stroke-width="1.5" />
+              <text x="86" y="63" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="700">4G / 5G / Internet</text>
+              <text x="86" y="85" text-anchor="middle" fill="#7dd3fc" font-size="10.5">HTTPS (TCP 443)</text>
+
+              <line x1="159" y1="71" x2="205" y2="71" stroke="#38bdf8" stroke-width="2" />
+              <polygon points="205,66 215,71 205,76" fill="#38bdf8" />
+
+              <!-- DuckDNS -->
+              <rect x="215" y="34" width="155" height="74" rx="12" fill="#0f172a" stroke="#a855f7" stroke-width="1.5" />
+              <text x="292" y="63" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="700">DuckDNS</text>
+              <text x="292" y="85" text-anchor="middle" fill="#d8b4fe" font-size="10">*.duckdns.org → IP</text>
+
+              <line x1="370" y1="71" x2="416" y2="71" stroke="#38bdf8" stroke-width="2" />
+              <polygon points="416,66 426,71 416,76" fill="#38bdf8" />
+
+              <!-- Box NAT 80/443 -->
+              <rect x="426" y="34" width="165" height="74" rx="12" fill="#0f172a" stroke="#f59e0b" stroke-width="1.5" />
+              <text x="508" y="63" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="700">
+                <tspan class="lang-fr">Box NAT 80 / 443</tspan>
+                <tspan class="lang-en">Box NAT 80 / 443</tspan>
+              </text>
+              <text x="508" y="85" text-anchor="middle" fill="#fcd34d" font-size="10">TCP 80 &amp; 443 → VM (.50)</text>
+
+              <line x1="591" y1="71" x2="635" y2="71" stroke="#38bdf8" stroke-width="2" />
+              <polygon points="635,66 645,71 635,76" fill="#38bdf8" />
+
+              <!-- VMware Bridged + Debian 12 + Docker -->
+              <rect x="645" y="16" width="300" height="218" rx="14" fill="#111827" stroke="#22c55e" stroke-width="1.5" />
+              <text x="795" y="39" text-anchor="middle" fill="#86efac" font-size="11.5" font-weight="700">VMware Bridged → Debian 12 → proxy-net</text>
+
+              <rect x="664" y="52" width="262" height="44" rx="9" fill="#0f172a" stroke="#38bdf8" stroke-width="1.2" />
+              <text x="795" y="71" text-anchor="middle" fill="#f8fafc" font-size="11" font-weight="700">Nginx Proxy Manager SSL</text>
+              <text x="795" y="87" text-anchor="middle" fill="#94a3b8" font-size="9.5">Let's Encrypt → nextcloud-app:80</text>
+
+              <rect x="664" y="106" width="262" height="38" rx="9" fill="#0284c7" fill-opacity="0.22" stroke="#38bdf8" stroke-width="1.2" />
+              <text x="795" y="129" text-anchor="middle" fill="#e0f2fe" font-size="11.5" font-weight="700">Nextcloud (nextcloud-app)</text>
+
+              <rect x="664" y="152" width="126" height="42" rx="8" fill="#0f172a" stroke="#64748b" stroke-width="1.1" />
+              <text x="727" y="170" text-anchor="middle" fill="#f1f5f9" font-size="10.5" font-weight="600">MariaDB</text>
+              <text x="727" y="185" text-anchor="middle" fill="#94a3b8" font-size="9">Isolated DB</text>
+
+              <rect x="800" y="152" width="126" height="42" rx="8" fill="#0f172a" stroke="#64748b" stroke-width="1.1" />
+              <text x="863" y="170" text-anchor="middle" fill="#f1f5f9" font-size="10.5" font-weight="600">Redis</text>
+              <text x="863" y="185" text-anchor="middle" fill="#94a3b8" font-size="9">Cache &amp; Locks</text>
+
+              <rect x="664" y="200" width="262" height="26" rx="7" fill="#0f172a" stroke="#a855f7" stroke-width="1.1" />
+              <text x="795" y="217" text-anchor="middle" fill="#e9d5ff" font-size="10" font-weight="600">DuckDNS Container (IP Sync)</text>
+
+              <!-- Dynamic DNS update loop -->
+              <rect x="215" y="150" width="376" height="54" rx="10" fill="#0f172a" stroke="#a855f7" stroke-dasharray="4 3" stroke-width="1.2" />
+              <text x="403" y="173" text-anchor="middle" fill="#e9d5ff" font-size="11" font-weight="600">
+                <tspan class="lang-fr">Mise à jour automatique de l'IP publique vers DuckDNS</tspan>
+                <tspan class="lang-en">Automatic Public IP Sync to DuckDNS</tspan>
+              </text>
+              <text x="403" y="191" text-anchor="middle" fill="#94a3b8" font-size="9.5">https://www.duckdns.org/update</text>
+            </svg>
+          </div>
+
+          <!-- High School / Beginner Callout -->
+          <div class="student-detail rounded-2xl p-4 sm:p-5 text-xs sm:text-sm space-y-1.5">
+            <div class="font-bold">
+              <span class="lang-fr">Repère Lycéen / Débutant — Architecture</span>
+              <span class="lang-en">High School / Beginner Guide — Architecture</span>
+            </div>
+            <p class="leading-relaxed">
+              <span class="lang-fr"><strong>Action :</strong> Suivez les sections dans l'ordre. <strong>Pourquoi :</strong> Chaque brique a un rôle précis (VMware = machine virtuelle, Debian 12 = système, Docker = conteneurs, DuckDNS = nom de domaine, Nginx Proxy Manager = cadenas HTTPS). <strong>Contrôle :</strong> Vous visualisez le trajet du trafic de gauche à droite sur le schéma.</span>
+              <span class="lang-en"><strong>Action:</strong> Follow the sections in order. <strong>Why:</strong> Each layer has a clear job (VMware = virtual machine, Debian 12 = OS, Docker = containers, DuckDNS = domain name, Nginx Proxy Manager = HTTPS lock). <strong>Check:</strong> You can trace traffic left-to-right across the diagram.</span>
+            </p>
+          </div>
+        </section>
+
+        <!-- SECTION 02: DEBIAN 12 NETINST & SUDO TIP -->
+        <section id="sec-2" data-searchable class="wiki-section rounded-3xl p-6 sm:p-8 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs space-y-5">
+          <div class="flex flex-wrap items-start justify-between gap-4 border-b border-slate-100 dark:border-slate-800 pb-4">
+            <div>
+              <span class="text-xs font-mono font-bold uppercase tracking-wider text-brand-600 dark:text-brand-400">
+                <span class="lang-fr">Section 02</span>
+                <span class="lang-en">Section 02</span>
+              </span>
+              <h2 class="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white mt-0.5">
+                <span class="lang-fr">Debian 12 (Bookworm) Netinst &amp; activation de sudo</span>
+                <span class="lang-en">Debian 12 (Bookworm) Netinst &amp; Enabling sudo</span>
+              </h2>
+            </div>
+            <label class="inline-flex items-center gap-2 text-xs font-medium text-slate-600 dark:text-slate-300 cursor-pointer select-none bg-slate-50 dark:bg-slate-800/80 px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700">
+              <input type="checkbox" data-step-key="wiki-2" class="step-checkbox rounded text-brand-600 focus:ring-brand-500 w-4 h-4" />
+              <span class="lang-fr">Validé</span>
+              <span class="lang-en">Done</span>
+            </label>
+          </div>
+
+          <p class="text-xs sm:text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+            <span class="lang-fr">Installez <strong>Debian 12 Netinst</strong> en mode minimal (cochez uniquement <strong>SSH server</strong> et <strong>standard system utilities</strong>, sans environnement graphique). Laissez le mot de passe <code class="text-brand-700 dark:text-brand-300">root</code> vide lors de l'installation pour que votre premier utilisateur fasse partie du groupe <code class="text-brand-700 dark:text-brand-300">sudo</code>.</span>
+            <span class="lang-en">Install <strong>Debian 12 Netinst</strong> minimally (check only <strong>SSH server</strong> and <strong>standard system utilities</strong>, no desktop environment). Leave the <code class="text-brand-700 dark:text-brand-300">root</code> password blank during setup so your regular user is added to <code class="text-brand-700 dark:text-brand-300">sudo</code>.</span>
+          </p>
+
+          <div class="rounded-2xl overflow-hidden border border-slate-800 bg-slate-950">
+            <div class="flex items-center justify-between px-4 py-2.5 bg-slate-900 border-b border-slate-800">
+              <span class="text-xs font-mono text-slate-400">bash — <span class="lang-fr">Vérifier sudo, l'interface réseau et la passerelle</span><span class="lang-en">Verify sudo, network interface &amp; gateway</span></span>
+              <button type="button" class="copy-btn px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-800 text-slate-200 hover:bg-brand-600 hover:text-white transition">Copier</button>
+            </div>
+            <pre class="p-4 text-xs sm:text-sm text-slate-100 overflow-x-auto"><code>sudo -v
+ip -br a
+ip route | grep default</code></pre>
+          </div>
+
+          <div class="student-detail rounded-2xl p-4 sm:p-5 text-xs sm:text-sm space-y-1.5">
+            <div class="font-bold">
+              <span class="lang-fr">Repère Lycéen / Débutant — Astuce mot de passe root vide</span>
+              <span class="lang-en">High School / Beginner Guide — Blank Root Password Tip</span>
+            </div>
+            <p class="leading-relaxed">
+              <span class="lang-fr"><strong>Action :</strong> Laissez vide le champ du mot de passe <code class="px-1 py-0.5 rounded bg-black/10 dark:bg-white/10">root</code> pendant l'installation Debian. <strong>Pourquoi :</strong> L'installateur configure alors automatiquement <code class="px-1 py-0.5 rounded bg-black/10 dark:bg-white/10">sudo</code> sur votre compte utilisateur. <strong>Contrôle :</strong> <code class="px-1 py-0.5 rounded bg-black/10 dark:bg-white/10">sudo -v</code> demande votre mot de passe utilisateur et revient sans erreur.</span>
+              <span class="lang-en"><strong>Action:</strong> Leave the <code class="px-1 py-0.5 rounded bg-black/10 dark:bg-white/10">root</code> password blank during Debian installation. <strong>Why:</strong> The installer automatically grants <code class="px-1 py-0.5 rounded bg-black/10 dark:bg-white/10">sudo</code> privileges to your user account. <strong>Check:</strong> <code class="px-1 py-0.5 rounded bg-black/10 dark:bg-white/10">sudo -v</code> accepts your user password with no error.</span>
+            </p>
+          </div>
+        </section>
+
+        <!-- SECTION 03: STATIC IP, DHCP RESERVATION, CGNAT & NAT LOOPBACK -->
+        <section id="sec-3" data-searchable class="wiki-section rounded-3xl p-6 sm:p-8 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs space-y-5">
+          <div class="flex flex-wrap items-start justify-between gap-4 border-b border-slate-100 dark:border-slate-800 pb-4">
+            <div>
+              <span class="text-xs font-mono font-bold uppercase tracking-wider text-brand-600 dark:text-brand-400">
+                <span class="lang-fr">Section 03</span>
+                <span class="lang-en">Section 03</span>
+              </span>
+              <h2 class="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white mt-0.5">
+                <span class="lang-fr">IP statique (/etc/network/interfaces), DHCP, CGNAT &amp; NAT Loopback</span>
+                <span class="lang-en">Static IP (/etc/network/interfaces), DHCP, CGNAT &amp; NAT Loopback</span>
+              </h2>
+            </div>
+            <label class="inline-flex items-center gap-2 text-xs font-medium text-slate-600 dark:text-slate-300 cursor-pointer select-none bg-slate-50 dark:bg-slate-800/80 px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700">
+              <input type="checkbox" data-step-key="wiki-3" class="step-checkbox rounded text-brand-600 focus:ring-brand-500 w-4 h-4" />
+              <span class="lang-fr">Validé</span>
+              <span class="lang-en">Done</span>
+            </label>
+          </div>
+
+          <p class="text-xs sm:text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+            <span class="lang-fr">Choisissez une adresse IP statique <strong>hors de la plage DHCP</strong> de votre box (ou déclarez une <strong>réservation DHCP</strong> liée à l'adresse MAC de la VM), adaptez l'interface (<code class="text-brand-700 dark:text-brand-300">ens33</code>) et la passerelle, puis appliquez :</span>
+            <span class="lang-en">Pick a static IP <strong>outside your router's DHCP pool</strong> (or configure a <strong>DHCP static lease</strong> by VM MAC address), match your interface (<code class="text-brand-700 dark:text-brand-300">ens33</code>) and gateway, then apply:</span>
+          </p>
+
+          <div class="rounded-2xl overflow-hidden border border-slate-800 bg-slate-950">
+            <div class="flex items-center justify-between px-4 py-2.5 bg-slate-900 border-b border-slate-800">
+              <span class="text-xs font-mono text-slate-400">bash — /etc/network/interfaces</span>
+              <button type="button" class="copy-btn px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-800 text-slate-200 hover:bg-brand-600 hover:text-white transition">Copier</button>
+            </div>
+            <pre class="p-4 text-xs sm:text-sm text-slate-100 overflow-x-auto"><code>sudo tee /etc/network/interfaces &gt; /dev/null &lt;&lt;'EOF'
+source /etc/network/interfaces.d/*
+
+auto lo
+iface lo inet loopback
+
+allow-hotplug ens33
+iface ens33 inet static
+    address 192.168.1.50/24
+    gateway 192.168.1.1
+    dns-nameservers 1.1.1.1 9.9.9.9
+EOF
+
+sudo systemctl restart networking
+ip -br a
+ping -c 3 1.1.1.1</code></pre>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs sm:text-sm">
+            <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
+              <div class="font-bold text-slate-900 dark:text-white">
+                <span class="lang-fr">Hors plage DHCP / Réservation MAC</span>
+                <span class="lang-en">Outside DHCP Pool / MAC Reservation</span>
+              </div>
+              <p class="mt-1 text-slate-600 dark:text-slate-300 leading-relaxed">
+                <span class="lang-fr">Si la box distribue <code class="text-brand-700 dark:text-brand-300">192.168.1.10</code> à <code class="text-brand-700 dark:text-brand-300">192.168.1.100</code>, choisissez par exemple <code class="text-brand-700 dark:text-brand-300">192.168.1.50</code> uniquement si elle est exclue du DHCP ou réservée sur la box.</span>
+                <span class="lang-en">If your router leases <code class="text-brand-700 dark:text-brand-300">192.168.1.10</code>–<code class="text-brand-700 dark:text-brand-300">192.168.1.100</code>, use <code class="text-brand-700 dark:text-brand-300">192.168.1.50</code> only if excluded from DHCP or reserved by MAC address.</span>
+              </p>
+            </div>
+            <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
+              <div class="font-bold text-slate-900 dark:text-white">
+                <span class="lang-fr">CGNAT &amp; NAT Loopback</span>
+                <span class="lang-en">CGNAT &amp; NAT Loopback</span>
+              </div>
+              <p class="mt-1 text-slate-600 dark:text-slate-300 leading-relaxed">
+                <span class="lang-fr">Vérifiez que l'IP publique vue sur Internet correspond à l'IP WAN de la box (pas de blocage CGNAT). Si le domaine échoue en Wi-Fi local mais marche en 4G/5G, votre box manque de <em>NAT loopback</em>.</span>
+                <span class="lang-en">Check that your observed public IP matches your router's WAN IP (no CGNAT port block). If the domain works on 4G/5G but fails on home Wi-Fi, your router lacks <em>NAT loopback</em>.</span>
+              </p>
+            </div>
+          </div>
+
+          <div class="student-detail rounded-2xl p-4 sm:p-5 text-xs sm:text-sm space-y-1.5">
+            <div class="font-bold">
+              <span class="lang-fr">Repère Lycéen / Débutant — IP fixe &amp; NAT Loopback</span>
+              <span class="lang-en">High School / Beginner Guide — Static IP &amp; NAT Loopback</span>
+            </div>
+            <p class="leading-relaxed">
+              <span class="lang-fr"><strong>Action :</strong> Adaptez <code class="px-1 py-0.5 rounded bg-black/10 dark:bg-white/10">192.168.1.50/24</code> et la passerelle à votre box. <strong>Pourquoi :</strong> La règle NAT de la box envoie les ports <code class="px-1 py-0.5 rounded bg-black/10 dark:bg-white/10">80</code> et <code class="px-1 py-0.5 rounded bg-black/10 dark:bg-white/10">443</code> vers cette IP précise. <strong>Contrôle :</strong> <code class="px-1 py-0.5 rounded bg-black/10 dark:bg-white/10">ip -br a</code> affiche votre IP fixe et <code class="px-1 py-0.5 rounded bg-black/10 dark:bg-white/10">ping -c 3 1.1.1.1</code> répond à 100 %.</span>
+              <span class="lang-en"><strong>Action:</strong> Match <code class="px-1 py-0.5 rounded bg-black/10 dark:bg-white/10">192.168.1.50/24</code> and the gateway to your router. <strong>Why:</strong> Your router's port forward rule sends ports <code class="px-1 py-0.5 rounded bg-black/10 dark:bg-white/10">80</code> and <code class="px-1 py-0.5 rounded bg-black/10 dark:bg-white/10">443</code> to this exact IP. <strong>Check:</strong> <code class="px-1 py-0.5 rounded bg-black/10 dark:bg-white/10">ip -br a</code> shows your static IP and <code class="px-1 py-0.5 rounded bg-black/10 dark:bg-white/10">ping -c 3 1.1.1.1</code> succeeds.</span>
+            </p>
+          </div>
+        </section>
+
+        <!-- SECTION 04: DUCKDNS SETUP -->
+        <section id="sec-4" data-searchable class="wiki-section rounded-3xl p-6 sm:p-8 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs space-y-5">
+          <div class="flex flex-wrap items-start justify-between gap-4 border-b border-slate-100 dark:border-slate-800 pb-4">
+            <div>
+              <span class="text-xs font-mono font-bold uppercase tracking-wider text-brand-600 dark:text-brand-400">
+                <span class="lang-fr">Section 04</span>
+                <span class="lang-en">Section 04</span>
+              </span>
+              <h2 class="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white mt-0.5">
+                <span class="lang-fr">Configuration DuckDNS (sous-domaine &amp; token)</span>
+                <span class="lang-en">DuckDNS Setup (Subdomain &amp; Token)</span>
+              </h2>
+            </div>
+            <label class="inline-flex items-center gap-2 text-xs font-medium text-slate-600 dark:text-slate-300 cursor-pointer select-none bg-slate-50 dark:bg-slate-800/80 px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700">
+              <input type="checkbox" data-step-key="wiki-4" class="step-checkbox rounded text-brand-600 focus:ring-brand-500 w-4 h-4" />
+              <span class="lang-fr">Validé</span>
+              <span class="lang-en">Done</span>
+            </label>
+          </div>
+
+          <p class="text-xs sm:text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+            <span class="lang-fr">Réservez un sous-domaine sur <strong>duckdns.org</strong> (ex. <code class="text-brand-700 dark:text-brand-300">mon-cloud-perso.duckdns.org</code>) et copiez votre <strong>token</strong>. Vérifiez ensuite que le nom résout vers l'IP publique actuelle :</span>
+            <span class="lang-en">Claim a subdomain on <strong>duckdns.org</strong> (e.g., <code class="text-brand-700 dark:text-brand-300">mon-cloud-perso.duckdns.org</code>) and copy your <strong>token</strong>. Verify that the domain resolves to your current public IP:</span>
+          </p>
+
+          <div class="rounded-2xl overflow-hidden border border-slate-800 bg-slate-950">
+            <div class="flex items-center justify-between px-4 py-2.5 bg-slate-900 border-b border-slate-800">
+              <span class="text-xs font-mono text-slate-400">bash — <span class="lang-fr">Vérifier la résolution DNS et l'IP publique</span><span class="lang-en">Verify DNS lookup &amp; public IP</span></span>
+              <button type="button" class="copy-btn px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-800 text-slate-200 hover:bg-brand-600 hover:text-white transition">Copier</button>
+            </div>
+            <pre class="p-4 text-xs sm:text-sm text-slate-100 overflow-x-auto"><code>getent ahosts mon-cloud-perso.duckdns.org
+curl -s https://ifconfig.me ; echo ""</code></pre>
+          </div>
+
+          <div class="student-detail rounded-2xl p-4 sm:p-5 text-xs sm:text-sm space-y-1.5">
+            <div class="font-bold">
+              <span class="lang-fr">Repère Lycéen / Débutant — DuckDNS</span>
+              <span class="lang-en">High School / Beginner Guide — DuckDNS</span>
+            </div>
+            <p class="leading-relaxed">
+              <span class="lang-fr"><strong>Action :</strong> Notez le nom du sous-domaine (sans <code class="px-1 py-0.5 rounded bg-black/10 dark:bg-white/10">.duckdns.org</code> pour <code class="px-1 py-0.5 rounded bg-black/10 dark:bg-white/10">DUCKDNS_SUBDOMAIN</code>) et votre token. <strong>Pourquoi :</strong> Votre box peut changer d'IP publique ; le conteneur DuckDNS mettra le DNS à jour automatiquement. <strong>Contrôle :</strong> L'adresse IP retournée par <code class="px-1 py-0.5 rounded bg-black/10 dark:bg-white/10">getent ahosts</code> correspond à votre IP publique.</span>
+              <span class="lang-en"><strong>Action:</strong> Copy your subdomain name (without <code class="px-1 py-0.5 rounded bg-black/10 dark:bg-white/10">.duckdns.org</code> for <code class="px-1 py-0.5 rounded bg-black/10 dark:bg-white/10">DUCKDNS_SUBDOMAIN</code>) and your token. <strong>Why:</strong> Your home public IP may rotate; the DuckDNS container keeps DNS updated automatically. <strong>Check:</strong> The IP from <code class="px-1 py-0.5 rounded bg-black/10 dark:bg-white/10">getent ahosts</code> matches your public IP.</span>
+            </p>
+          </div>
+        </section>
+
+        <!-- SECTION 05: DOCKER ENGINE & COMPOSE ON DEBIAN 12 -->
+        <section id="sec-5" data-searchable class="wiki-section rounded-3xl p-6 sm:p-8 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs space-y-5">
+          <div class="flex flex-wrap items-start justify-between gap-4 border-b border-slate-100 dark:border-slate-800 pb-4">
+            <div>
+              <span class="text-xs font-mono font-bold uppercase tracking-wider text-brand-600 dark:text-brand-400">
+                <span class="lang-fr">Section 05</span>
+                <span class="lang-en">Section 05</span>
+              </span>
+              <h2 class="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white mt-0.5">
+                <span class="lang-fr">Installation de Docker Engine &amp; Docker Compose sur Debian 12</span>
+                <span class="lang-en">Installing Docker Engine &amp; Docker Compose on Debian 12</span>
+              </h2>
+            </div>
+            <label class="inline-flex items-center gap-2 text-xs font-medium text-slate-600 dark:text-slate-300 cursor-pointer select-none bg-slate-50 dark:bg-slate-800/80 px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700">
+              <input type="checkbox" data-step-key="wiki-5" class="step-checkbox rounded text-brand-600 focus:ring-brand-500 w-4 h-4" />
+              <span class="lang-fr">Validé</span>
+              <span class="lang-en">Done</span>
+            </label>
+          </div>
+
+          <div class="rounded-2xl overflow-hidden border border-slate-800 bg-slate-950">
+            <div class="flex items-center justify-between px-4 py-2.5 bg-slate-900 border-b border-slate-800">
+              <span class="text-xs font-mono text-slate-400">bash — <span class="lang-fr">Installer Docker depuis le dépôt officiel Debian</span><span class="lang-en">Install Docker from official Debian repo</span></span>
+              <button type="button" class="copy-btn px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-800 text-slate-200 hover:bg-brand-600 hover:text-white transition">Copier</button>
+            </div>
+            <pre class="p-4 text-xs sm:text-sm text-slate-100 overflow-x-auto"><code>sudo apt-get update
+sudo apt-get install -y ca-certificates curl gnupg
+
+sudo install -m 0755 -d /etc/apt/keyrings
+curl -fsSL https://download.docker.com/linux/debian/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+sudo chmod a+r /etc/apt/keyrings/docker.gpg
+
+echo \
+  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/debian \
+  $(. /etc/os-release &amp;&amp; echo "$VERSION_CODENAME") stable" | \
+  sudo tee /etc/apt/sources.list.d/docker.list &gt; /dev/null
+
+sudo apt-get update
+sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+
+sudo usermod -aG docker $USER
+newgrp docker
+
+docker --version
+docker compose version</code></pre>
+          </div>
+
+          <div class="student-detail rounded-2xl p-4 sm:p-5 text-xs sm:text-sm space-y-1.5">
+            <div class="font-bold">
+              <span class="lang-fr">Repère Lycéen / Débutant — Docker</span>
+              <span class="lang-en">High School / Beginner Guide — Docker</span>
+            </div>
+            <p class="leading-relaxed">
+              <span class="lang-fr"><strong>Action :</strong> Copiez-collez le bloc complet puis exécutez <code class="px-1 py-0.5 rounded bg-black/10 dark:bg-white/10">newgrp docker</code>. <strong>Pourquoi :</strong> Ajouter votre compte au groupe <code class="px-1 py-0.5 rounded bg-black/10 dark:bg-white/10">docker</code> évite de taper <code class="px-1 py-0.5 rounded bg-black/10 dark:bg-white/10">sudo</code> devant chaque commande Docker. <strong>Contrôle :</strong> <code class="px-1 py-0.5 rounded bg-black/10 dark:bg-white/10">docker compose version</code> affiche la version installée.</span>
+              <span class="lang-en"><strong>Action:</strong> Paste the full block and run <code class="px-1 py-0.5 rounded bg-black/10 dark:bg-white/10">newgrp docker</code>. <strong>Why:</strong> Joining the <code class="px-1 py-0.5 rounded bg-black/10 dark:bg-white/10">docker</code> group lets you run Docker commands without typing <code class="px-1 py-0.5 rounded bg-black/10 dark:bg-white/10">sudo</code> repeatedly. <strong>Check:</strong> <code class="px-1 py-0.5 rounded bg-black/10 dark:bg-white/10">docker compose version</code> prints the Compose version.</span>
+            </p>
+          </div>
+        </section>
+
+        <!-- SECTION 06: ROUTER PORT FORWARDING (80 & 443 ONLY, NEVER 81) -->
+        <section id="sec-6" data-searchable class="wiki-section rounded-3xl p-6 sm:p-8 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs space-y-5">
+          <div class="flex flex-wrap items-start justify-between gap-4 border-b border-slate-100 dark:border-slate-800 pb-4">
+            <div>
+              <span class="text-xs font-mono font-bold uppercase tracking-wider text-brand-600 dark:text-brand-400">
+                <span class="lang-fr">Section 06</span>
+                <span class="lang-en">Section 06</span>
+              </span>
+              <h2 class="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white mt-0.5">
+                <span class="lang-fr">Redirection de ports sur la box (80 et 443 uniquement)</span>
+                <span class="lang-en">Router Port Forwarding (Ports 80 &amp; 443 Only)</span>
+              </h2>
+            </div>
+            <label class="inline-flex items-center gap-2 text-xs font-medium text-slate-600 dark:text-slate-300 cursor-pointer select-none bg-slate-50 dark:bg-slate-800/80 px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700">
+              <input type="checkbox" data-step-key="wiki-6" class="step-checkbox rounded text-brand-600 focus:ring-brand-500 w-4 h-4" />
+              <span class="lang-fr">Validé</span>
+              <span class="lang-en">Done</span>
+            </label>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs sm:text-sm">
+            <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 font-mono">
+              <div class="text-brand-700 dark:text-brand-300 font-bold">TCP 80 → 192.168.1.50:80</div>
+              <div class="text-slate-600 dark:text-slate-400 font-sans text-xs mt-1">
+                <span class="lang-fr">Validation HTTP Let's Encrypt &amp; redirection HTTPS.</span>
+                <span class="lang-en">Let's Encrypt HTTP validation &amp; HTTPS redirect.</span>
+              </div>
+            </div>
+            <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 font-mono">
+              <div class="text-brand-700 dark:text-brand-300 font-bold">TCP 443 → 192.168.1.50:443</div>
+              <div class="text-slate-600 dark:text-slate-400 font-sans text-xs mt-1">
+                <span class="lang-fr">Trafic HTTPS chiffré vers Nginx Proxy Manager.</span>
+                <span class="lang-en">Encrypted HTTPS traffic to Nginx Proxy Manager.</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="p-4 rounded-2xl bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800/70 text-xs sm:text-sm text-rose-900 dark:text-rose-200">
+            <strong>
+              <span class="lang-fr">Sécurité critique :</span>
+              <span class="lang-en">Critical security rule:</span>
+            </strong>
+            <span class="lang-fr">N'exposez <strong>jamais</strong> le port <code class="font-bold">81</code> sur Internet. Il correspond à l'interface d'administration de Nginx Proxy Manager et doit rester accessible uniquement sur votre réseau local.</span>
+            <span class="lang-en"><strong>Never</strong> expose port <code class="font-bold">81</code> to the Internet. It serves the Nginx Proxy Manager admin dashboard and must stay local-only.</span>
+          </div>
+
+          <div class="student-detail rounded-2xl p-4 sm:p-5 text-xs sm:text-sm space-y-1.5">
+            <div class="font-bold">
+              <span class="lang-fr">Repère Lycéen / Débutant — Port Forwarding</span>
+              <span class="lang-en">High School / Beginner Guide — Port Forwarding</span>
+            </div>
+            <p class="leading-relaxed">
+              <span class="lang-fr"><strong>Action :</strong> Créez uniquement deux règles TCP (<code class="px-1 py-0.5 rounded bg-black/10 dark:bg-white/10">80</code> et <code class="px-1 py-0.5 rounded bg-black/10 dark:bg-white/10">443</code>) vers l'IP fixe de votre VM. <strong>Pourquoi :</strong> Par défaut, votre box bloque les connexions entrantes non sollicitées depuis Internet. <strong>Contrôle :</strong> Le port <code class="px-1 py-0.5 rounded bg-black/10 dark:bg-white/10">81</code> n'apparaît dans aucune règle de redirection externe.</span>
+              <span class="lang-en"><strong>Action:</strong> Add only two TCP rules (<code class="px-1 py-0.5 rounded bg-black/10 dark:bg-white/10">80</code> and <code class="px-1 py-0.5 rounded bg-black/10 dark:bg-white/10">443</code>) pointing to your VM's static IP. <strong>Why:</strong> Routers block unsolicited inbound traffic from the Internet unless explicitly forwarded. <strong>Check:</strong> Port <code class="px-1 py-0.5 rounded bg-black/10 dark:bg-white/10">81</code> is not forwarded externally.</span>
+            </p>
+          </div>
+        </section>
+
+        <!-- SECTION 07: DOCKER STACK (.ENV WITH OPENSSL RAND + DOCKER-COMPOSE.YML) -->
+        <section id="sec-7" data-searchable class="wiki-section rounded-3xl p-6 sm:p-8 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs space-y-5">
+          <div class="flex flex-wrap items-start justify-between gap-4 border-b border-slate-100 dark:border-slate-800 pb-4">
+            <div>
+              <span class="text-xs font-mono font-bold uppercase tracking-wider text-brand-600 dark:text-brand-400">
+                <span class="lang-fr">Section 07</span>
+                <span class="lang-en">Section 07</span>
+              </span>
+              <h2 class="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white mt-0.5">
+                <span class="lang-fr">Stack Docker : .env (secrets forts) &amp; docker-compose.yml (proxy-net)</span>
+                <span class="lang-en">Docker Stack: .env (Strong Secrets) &amp; docker-compose.yml (proxy-net)</span>
+              </h2>
+            </div>
+            <label class="inline-flex items-center gap-2 text-xs font-medium text-slate-600 dark:text-slate-300 cursor-pointer select-none bg-slate-50 dark:bg-slate-800/80 px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700">
+              <input type="checkbox" data-step-key="wiki-7" class="step-checkbox rounded text-brand-600 focus:ring-brand-500 w-4 h-4" />
+              <span class="lang-fr">Validé</span>
+              <span class="lang-en">Done</span>
+            </label>
+          </div>
+
+          <div class="rounded-2xl overflow-hidden border border-slate-800 bg-slate-950">
+            <div class="flex items-center justify-between px-4 py-2.5 bg-slate-900 border-b border-slate-800">
+              <span class="text-xs font-mono text-slate-400">bash — <span class="lang-fr">Créer proxy-net et générer des mots de passe aléatoires</span><span class="lang-en">Create proxy-net &amp; generate strong secrets</span></span>
+              <button type="button" class="copy-btn px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-800 text-slate-200 hover:bg-brand-600 hover:text-white transition">Copier</button>
+            </div>
+            <pre class="p-4 text-xs sm:text-sm text-slate-100 overflow-x-auto"><code>mkdir -p ~/nextcloud-stack/npm-data ~/nextcloud-stack/npm-letsencrypt
+cd ~/nextcloud-stack
+docker network create proxy-net
+
+echo "MYSQL_ROOT_PASSWORD: $(openssl rand -hex 24)"
+echo "MYSQL_PASSWORD:      $(openssl rand -hex 24)"</code></pre>
+          </div>
+
+          <div class="rounded-2xl overflow-hidden border border-slate-800 bg-slate-950">
+            <div class="flex items-center justify-between px-4 py-2.5 bg-slate-900 border-b border-slate-800">
+              <span class="text-xs font-mono text-slate-400">dotenv — ~/nextcloud-stack/.env</span>
+              <button type="button" class="copy-btn px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-800 text-slate-200 hover:bg-brand-600 hover:text-white transition">Copier</button>
+            </div>
+            <pre class="p-4 text-xs sm:text-sm text-slate-100 overflow-x-auto"><code>DUCKDNS_SUBDOMAIN=mon-cloud-perso
+DUCKDNS_TOKEN=REMPLACEZ_PAR_VOTRE_TOKEN_DUCKDNS
+DOMAIN=mon-cloud-perso.duckdns.org
+
+MYSQL_ROOT_PASSWORD=REMPLACEZ_PAR_SORTIE_OPENSSL_ROOT
+MYSQL_PASSWORD=REMPLACEZ_PAR_SORTIE_OPENSSL_USER</code></pre>
+          </div>
+
+          <div class="rounded-2xl overflow-hidden border border-slate-800 bg-slate-950">
+            <div class="flex items-center justify-between px-4 py-2.5 bg-slate-900 border-b border-slate-800">
+              <span class="text-xs font-mono text-slate-400">yaml — ~/nextcloud-stack/docker-compose.yml</span>
+              <button type="button" class="copy-btn px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-800 text-slate-200 hover:bg-brand-600 hover:text-white transition">Copier</button>
+            </div>
+            <pre class="p-4 text-xs sm:text-sm text-slate-100 overflow-x-auto"><code>services:
+  duckdns:
+    image: lscr.io/linuxserver/duckdns:latest
+    container_name: duckdns
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Paris
+      - SUBDOMAINS=${DUCKDNS_SUBDOMAIN}
+      - TOKEN=${DUCKDNS_TOKEN}
+      - LOG_FILE=false
+    networks:
+      - proxy-net
+    restart: unless-stopped
+
+  npm:
+    image: jc21/nginx-proxy-manager:latest
+    container_name: nginx-proxy-manager
+    ports:
+      - "80:80"
+      - "81:81"
+      - "443:443"
+    volumes:
+      - ./npm-data:/data
+      - ./npm-letsencrypt:/etc/letsencrypt
+    networks:
+      - proxy-net
+    restart: unless-stopped
+
+  db:
+    image: mariadb:10.11
+    container_name: nextcloud-db
+    command: --transaction-isolation=READ-COMMITTED --log-bin=binlog --binlog-format=ROW
+    volumes:
+      - db_data:/var/lib/mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+      - MYSQL_DATABASE=nextcloud
+      - MYSQL_USER=nextcloud
+    networks:
+      - proxy-net
+    restart: unless-stopped
+
+  redis:
+    image: redis:alpine
+    container_name: nextcloud-redis
+    networks:
+      - proxy-net
+    restart: unless-stopped
+
+  nextcloud:
+    image: nextcloud:stable
+    container_name: nextcloud-app
+    volumes:
+      - nextcloud_data:/var/www/html
+    environment:
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+      - MYSQL_DATABASE=nextcloud
+      - MYSQL_USER=nextcloud
+      - MYSQL_HOST=db
+      - REDIS_HOST=redis
+      - NEXTCLOUD_TRUSTED_DOMAINS=${DOMAIN}
+      - TRUSTED_PROXIES=172.16.0.0/12
+      - OVERWRITEPROTOCOL=https
+      - OVERWRITEHOST=${DOMAIN}
+      - OVERWRITECLIURL=https://${DOMAIN}
+    depends_on:
+      - db
+      - redis
+    networks:
+      - proxy-net
+    restart: unless-stopped
+
+networks:
+  proxy-net:
+    external: true
+
+volumes:
+  db_data:
+  nextcloud_data:</code></pre>
+          </div>
+
+          <div class="rounded-2xl overflow-hidden border border-slate-800 bg-slate-950">
+            <div class="flex items-center justify-between px-4 py-2.5 bg-slate-900 border-b border-slate-800">
+              <span class="text-xs font-mono text-slate-400">bash — <span class="lang-fr">Démarrer la stack</span><span class="lang-en">Start Docker stack</span></span>
+              <button type="button" class="copy-btn px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-800 text-slate-200 hover:bg-brand-600 hover:text-white transition">Copier</button>
+            </div>
+            <pre class="p-4 text-xs sm:text-sm text-slate-100 overflow-x-auto"><code>cd ~/nextcloud-stack
+docker compose up -d
+docker compose ps</code></pre>
+          </div>
+
+          <div class="student-detail rounded-2xl p-4 sm:p-5 text-xs sm:text-sm space-y-1.5">
+            <div class="font-bold">
+              <span class="lang-fr">Repère Lycéen / Débutant — Secrets &amp; Reverse Proxy</span>
+              <span class="lang-en">High School / Beginner Guide — Secrets &amp; Reverse Proxy</span>
+            </div>
+            <p class="leading-relaxed">
+              <span class="lang-fr"><strong>Action :</strong> Générez vos mots de passe avec <code class="px-1 py-0.5 rounded bg-black/10 dark:bg-white/10">openssl rand -hex 24</code> et collez-les dans <code class="px-1 py-0.5 rounded bg-black/10 dark:bg-white/10">.env</code>. <strong>Pourquoi :</strong> <code class="px-1 py-0.5 rounded bg-black/10 dark:bg-white/10">TRUSTED_PROXIES</code>, <code class="px-1 py-0.5 rounded bg-black/10 dark:bg-white/10">OVERWRITEPROTOCOL=https</code>, <code class="px-1 py-0.5 rounded bg-black/10 dark:bg-white/10">OVERWRITEHOST</code> et <code class="px-1 py-0.5 rounded bg-black/10 dark:bg-white/10">OVERWRITECLIURL</code> indiquent à Nextcloud qu'il est servi en HTTPS derrière Nginx Proxy Manager. <strong>Contrôle :</strong> <code class="px-1 py-0.5 rounded bg-black/10 dark:bg-white/10">docker compose ps</code> affiche tous les conteneurs en état <code class="px-1 py-0.5 rounded bg-black/10 dark:bg-white/10">Up</code> / <code class="px-1 py-0.5 rounded bg-black/10 dark:bg-white/10">running</code>.</span>
+              <span class="lang-en"><strong>Action:</strong> Generate secrets with <code class="px-1 py-0.5 rounded bg-black/10 dark:bg-white/10">openssl rand -hex 24</code> and place them in <code class="px-1 py-0.5 rounded bg-black/10 dark:bg-white/10">.env</code>. <strong>Why:</strong> <code class="px-1 py-0.5 rounded bg-black/10 dark:bg-white/10">TRUSTED_PROXIES</code>, <code class="px-1 py-0.5 rounded bg-black/10 dark:bg-white/10">OVERWRITEPROTOCOL=https</code>, <code class="px-1 py-0.5 rounded bg-black/10 dark:bg-white/10">OVERWRITEHOST</code>, and <code class="px-1 py-0.5 rounded bg-black/10 dark:bg-white/10">OVERWRITECLIURL</code> tell Nextcloud it sits behind an HTTPS reverse proxy. <strong>Check:</strong> <code class="px-1 py-0.5 rounded bg-black/10 dark:bg-white/10">docker compose ps</code> shows every container running.</span>
+            </p>
+          </div>
+        </section>
+
+        <!-- SECTION 08: NGINX PROXY MANAGER & LET'S ENCRYPT SSL -->
+        <section id="sec-8" data-searchable class="wiki-section rounded-3xl p-6 sm:p-8 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs space-y-5">
+          <div class="flex flex-wrap items-start justify-between gap-4 border-b border-slate-100 dark:border-slate-800 pb-4">
+            <div>
+              <span class="text-xs font-mono font-bold uppercase tracking-wider text-brand-600 dark:text-brand-400">
+                <span class="lang-fr">Section 08</span>
+                <span class="lang-en">Section 08</span>
+              </span>
+              <h2 class="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white mt-0.5">
+                <span class="lang-fr">Nginx Proxy Manager : Proxy Host, Let's Encrypt SSL &amp; CardDAV/CalDAV</span>
+                <span class="lang-en">Nginx Proxy Manager: Proxy Host, Let's Encrypt SSL &amp; CardDAV/CalDAV</span>
+              </h2>
+            </div>
+            <label class="inline-flex items-center gap-2 text-xs font-medium text-slate-600 dark:text-slate-300 cursor-pointer select-none bg-slate-50 dark:bg-slate-800/80 px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700">
+              <input type="checkbox" data-step-key="wiki-8" class="step-checkbox rounded text-brand-600 focus:ring-brand-500 w-4 h-4" />
+              <span class="lang-fr">Validé</span>
+              <span class="lang-en">Done</span>
+            </label>
+          </div>
+
+          <ol class="list-decimal list-inside space-y-2 text-xs sm:text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+            <li>
+              <span class="lang-fr">Ouvrez <code class="text-brand-700 dark:text-brand-300">http://192.168.1.50:81</code> (<code class="text-brand-700 dark:text-brand-300">admin@example.com</code> / <code class="text-brand-700 dark:text-brand-300">changeme</code>) et changez immédiatement l'adresse e-mail et le mot de passe.</span>
+              <span class="lang-en">Sign in at <code class="text-brand-700 dark:text-brand-300">http://192.168.1.50:81</code> (<code class="text-brand-700 dark:text-brand-300">admin@example.com</code> / <code class="text-brand-700 dark:text-brand-300">changeme</code>) and change the default email and password right away.</span>
+            </li>
+            <li>
+              <span class="lang-fr">Créez un <strong>Proxy Host</strong> pour <code class="text-brand-700 dark:text-brand-300">mon-cloud-perso.duckdns.org</code> vers <code class="text-brand-700 dark:text-brand-300">http://nextcloud-app:80</code>, activez <em>Websockets Support</em>, puis demandez un certificat <strong>Let's Encrypt</strong> avec <em>Force SSL</em> et <em>HTTP/2 Support</em>.</span>
+              <span class="lang-en">Add a <strong>Proxy Host</strong> for <code class="text-brand-700 dark:text-brand-300">mon-cloud-perso.duckdns.org</code> forwarding to <code class="text-brand-700 dark:text-brand-300">http://nextcloud-app:80</code>, enable <em>Websockets Support</em>, and request a <strong>Let's Encrypt</strong> certificate with <em>Force SSL</em> and <em>HTTP/2 Support</em>.</span>
+            </li>
+          </ol>
+
+          <div class="rounded-2xl overflow-hidden border border-slate-800 bg-slate-950">
+            <div class="flex items-center justify-between px-4 py-2.5 bg-slate-900 border-b border-slate-800">
+              <span class="text-xs font-mono text-slate-400">nginx — <span class="lang-fr">Redirections CardDAV &amp; CalDAV (onglet Advanced)</span><span class="lang-en">CardDAV &amp; CalDAV Redirects (Advanced Tab)</span></span>
+              <button type="button" class="copy-btn px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-800 text-slate-200 hover:bg-brand-600 hover:text-white transition">Copier</button>
+            </div>
+            <pre class="p-4 text-xs sm:text-sm text-slate-100 overflow-x-auto"><code>location = /.well-known/carddav {
+    return 301 /remote.php/dav;
+}
+location = /.well-known/caldav {
+    return 301 /remote.php/dav;
+}</code></pre>
+          </div>
+
+          <div class="student-detail rounded-2xl p-4 sm:p-5 text-xs sm:text-sm space-y-1.5">
+            <div class="font-bold">
+              <span class="lang-fr">Repère Lycéen / Débutant — Proxy Host</span>
+              <span class="lang-en">High School / Beginner Guide — Proxy Host</span>
+            </div>
+            <p class="leading-relaxed">
+              <span class="lang-fr"><strong>Action :</strong> Saisissez <code class="px-1 py-0.5 rounded bg-black/10 dark:bg-white/10">nextcloud-app</code> et le port <code class="px-1 py-0.5 rounded bg-black/10 dark:bg-white/10">80</code>. <strong>Pourquoi :</strong> Sur le réseau Docker <code class="px-1 py-0.5 rounded bg-black/10 dark:bg-white/10">proxy-net</code>, NPM résout directement le nom du conteneur Nextcloud. <strong>Contrôle :</strong> L'onglet SSL affiche un certificat Let's Encrypt valide.</span>
+              <span class="lang-en"><strong>Action:</strong> Enter <code class="px-1 py-0.5 rounded bg-black/10 dark:bg-white/10">nextcloud-app</code> and port <code class="px-1 py-0.5 rounded bg-black/10 dark:bg-white/10">80</code>. <strong>Why:</strong> On <code class="px-1 py-0.5 rounded bg-black/10 dark:bg-white/10">proxy-net</code>, NPM resolves the Nextcloud container name internally. <strong>Check:</strong> The SSL tab shows an active Let's Encrypt certificate.</span>
+            </p>
+          </div>
+        </section>
+
+        <!-- SECTION 09: FIRST NEXTCLOUD LOGIN & VERIFICATIONS -->
+        <section id="sec-9" data-searchable class="wiki-section rounded-3xl p-6 sm:p-8 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs space-y-5">
+          <div class="flex flex-wrap items-start justify-between gap-4 border-b border-slate-100 dark:border-slate-800 pb-4">
+            <div>
+              <span class="text-xs font-mono font-bold uppercase tracking-wider text-brand-600 dark:text-brand-400">
+                <span class="lang-fr">Section 09</span>
+                <span class="lang-en">Section 09</span>
+              </span>
+              <h2 class="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white mt-0.5">
+                <span class="lang-fr">Première connexion Nextcloud &amp; vérifications</span>
+                <span class="lang-en">First Nextcloud Login &amp; Checks</span>
+              </h2>
+            </div>
+            <label class="inline-flex items-center gap-2 text-xs font-medium text-slate-600 dark:text-slate-300 cursor-pointer select-none bg-slate-50 dark:bg-slate-800/80 px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700">
+              <input type="checkbox" data-step-key="wiki-9" class="step-checkbox rounded text-brand-600 focus:ring-brand-500 w-4 h-4" />
+              <span class="lang-fr">Validé</span>
+              <span class="lang-en">Done</span>
+            </label>
+          </div>
+
+          <ol class="list-decimal list-inside space-y-2 text-xs sm:text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+            <li>
+              <span class="lang-fr">Accédez à <code class="text-brand-700 dark:text-brand-300">https://mon-cloud-perso.duckdns.org</code> (en 4G/5G sur mobile pour valider l'accès externe), créez le compte administrateur et vérifiez le cadenas HTTPS.</span>
+              <span class="lang-en">Browse to <code class="text-brand-700 dark:text-brand-300">https://mon-cloud-perso.duckdns.org</code> (over 4G/5G on mobile to verify external access), create the admin user, and check the HTTPS certificate.</span>
+            </li>
+            <li>
+              <span class="lang-fr">Vérifiez les journaux et l'état de Nextcloud :</span>
+              <span class="lang-en">Check container logs and Nextcloud status:</span>
+            </li>
+          </ol>
+
+          <div class="rounded-2xl overflow-hidden border border-slate-800 bg-slate-950">
+            <div class="flex items-center justify-between px-4 py-2.5 bg-slate-900 border-b border-slate-800">
+              <span class="text-xs font-mono text-slate-400">bash — <span class="lang-fr">Contrôler les journaux des conteneurs</span><span class="lang-en">Inspect container logs</span></span>
+              <button type="button" class="copy-btn px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-800 text-slate-200 hover:bg-brand-600 hover:text-white transition">Copier</button>
+            </div>
+            <pre class="p-4 text-xs sm:text-sm text-slate-100 overflow-x-auto"><code>docker logs --tail 30 duckdns
+docker logs --tail 30 nextcloud-app</code></pre>
+          </div>
+
+          <div class="student-detail rounded-2xl p-4 sm:p-5 text-xs sm:text-sm space-y-1.5">
+            <div class="font-bold">
+              <span class="lang-fr">Repère Lycéen / Débutant — Validation finale</span>
+              <span class="lang-en">High School / Beginner Guide — Final Check</span>
+            </div>
+            <p class="leading-relaxed">
+              <span class="lang-fr"><strong>Action :</strong> Testez l'ouverture de votre domaine en 4G/5G puis créez votre compte administrateur. <strong>Pourquoi :</strong> La 4G/5G prouve que le flux complet (Internet → Box → NPM → Nextcloud) fonctionne. <strong>Contrôle :</strong> Vous êtes connecté au tableau de bord Nextcloud sans alerte SSL.</span>
+              <span class="lang-en"><strong>Action:</strong> Test your domain on 4G/5G and create your admin account. <strong>Why:</strong> Mobile 4G/5G proves the full path (Internet → Router → NPM → Nextcloud) works end-to-end. <strong>Check:</strong> You reach the Nextcloud dashboard with a valid HTTPS lock.</span>
+            </p>
+          </div>
+        </section>
+      </div>
+
+      <!-- ================================================================= -->
+      <!-- VIEW 2: ATELIER PRATIQUE                                          -->
+      <!-- ================================================================= -->
+      <div id="view-lab" class="hidden space-y-8">
+
+        <!-- Lab Hero -->
+        <div class="rounded-3xl p-6 sm:p-8 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs">
+          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-amber-50 dark:bg-amber-950/50 text-amber-800 dark:text-amber-300 border border-amber-300/80 dark:border-amber-700/70 mb-4">
+            <span class="lang-fr">Atelier Pratique • Aperçus d'écran &amp; Captures locales</span>
+            <span class="lang-en">Practical Lab • Screen Mockups &amp; Local Screenshots</span>
+          </div>
+          <h1 class="text-2xl sm:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white leading-tight">
+            <span class="lang-fr">Atelier pratique pas-à-pas : VMware, Snapshots, Debian 12, Box, PuTTY &amp; NPM</span>
+            <span class="lang-en">Hands-On Practical Lab: VMware, Snapshots, Debian 12, Router, PuTTY &amp; NPM</span>
+          </h1>
+          <p class="mt-3 text-sm sm:text-base text-slate-600 dark:text-slate-300 leading-relaxed max-w-3xl">
+            <span class="lang-fr">Retrouvez les écrans clés à chaque étape et testez vos propres captures d'écran dans le navigateur. <strong>Important :</strong> les images importées via le sélecteur de fichier restent locales dans votre navigateur (ne les stockez pas en masse dans <code class="text-brand-700 dark:text-brand-300">localStorage</code>) ; pour les afficher à tous les visiteurs sur GitHub Pages, placez vos fichiers image dans <code class="text-brand-700 dark:text-brand-300">assets/screens/</code>.</span>
+            <span class="lang-en">Walk through key screen mockups and preview your own screenshots in the browser. <strong>Note:</strong> files chosen with the file picker stay local in your browser (do not store large images in <code class="text-brand-700 dark:text-brand-300">localStorage</code>); for every visitor on GitHub Pages, place image files under <code class="text-brand-700 dark:text-brand-300">assets/screens/</code>.</span>
+          </p>
+        </div>
+
+        <!-- LAB 1: VMWARE INSTALLATION & BRIDGED NETWORK -->
+        <section id="lab-1" data-searchable class="rounded-3xl p-6 sm:p-8 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs space-y-5">
+          <div>
+            <span class="text-xs font-mono font-bold uppercase tracking-wider text-brand-600 dark:text-brand-400">
+              <span class="lang-fr">Atelier L1</span>
+              <span class="lang-en">Lab L1</span>
+            </span>
+            <h2 class="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white mt-0.5">
+              <span class="lang-fr">Installer VMware et configurer la carte réseau en Bridged</span>
+              <span class="lang-en">Install VMware &amp; Configure Bridged Networking</span>
+            </h2>
+          </div>
+
+          <ol class="list-decimal list-inside space-y-2 text-xs sm:text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+            <li>
+              <span class="lang-fr">Lancez l'installeur VMware, cliquez sur <em>Next</em>, acceptez les termes de licence et terminez l'installation.</span>
+              <span class="lang-en">Run the VMware installer, click <em>Next</em>, accept the license agreement, and finish setup.</span>
+            </li>
+            <li>
+              <span class="lang-fr">Dans les paramètres de la VM, sélectionnez <strong>Network Adapter</strong> puis choisissez <strong>Bridged</strong> (<em>Replicate physical network connection state</em>).</span>
+              <span class="lang-en">In VM settings, select <strong>Network Adapter</strong> and choose <strong>Bridged</strong> (<em>Replicate physical network connection state</em>).</span>
+            </li>
+          </ol>
+
+          <!-- Screen Mockup: VMware Bridged -->
+          <div class="rounded-2xl border border-slate-700 bg-slate-950 p-4 text-slate-100">
+            <div class="flex items-center justify-between text-xs font-mono text-slate-400 pb-2 mb-3 border-b border-slate-800">
+              <span>VMware — Virtual Machine Settings</span>
+              <span class="text-emerald-400">Bridged Active</span>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+              <div class="p-3 rounded-xl bg-slate-900 border border-slate-800 space-y-1.5">
+                <div class="font-bold text-sky-400">Devices</div>
+                <div class="text-slate-300">Memory: 4 GB</div>
+                <div class="text-slate-300">Processors: 2</div>
+                <div class="px-2 py-1 rounded bg-sky-500/20 border border-sky-500/50 text-sky-200 font-semibold">Network Adapter (Bridged)</div>
+              </div>
+              <div class="md:col-span-2 p-3 rounded-xl bg-slate-900 border border-slate-800 space-y-2">
+                <div class="font-bold text-white">Network Connection</div>
+                <div class="flex items-center gap-2 text-amber-300 font-semibold">
+                  <span class="w-3 h-3 rounded-full bg-amber-400 inline-block"></span>
+                  <span>Bridged: Connected directly to the physical network</span>
+                </div>
+                <div class="text-[11px] text-slate-400">
+                  <span class="lang-fr">Fichier conseillé sur GitHub Pages : <code class="text-slate-200">assets/screens/vmware-bridged.png</code></span>
+                  <span class="lang-en">Suggested GitHub Pages path: <code class="text-slate-200">assets/screens/vmware-bridged.png</code></span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Local Screenshot Preview Uploader -->
+          <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-dashed border-slate-300 dark:border-slate-700 space-y-2.5">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <span class="text-xs font-semibold text-slate-700 dark:text-slate-200">
+                <span class="lang-fr">Aperçu local d'une capture VMware (non enregistré dans localStorage)</span>
+                <span class="lang-en">Local VMware Screenshot Preview (not stored in localStorage)</span>
+              </span>
+              <input type="file" accept="image/*" data-lab-slot="lab-1" class="lab-file-input text-xs text-slate-600 dark:text-slate-300 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-brand-600 file:text-white hover:file:bg-brand-700 cursor-pointer" />
+            </div>
+            <div data-lab-preview="lab-1" class="hidden">
+              <img alt="VMware bridged local preview" class="max-h-64 rounded-xl border border-slate-200 dark:border-slate-700 object-contain bg-white" />
+            </div>
+          </div>
+
+          <div class="student-detail rounded-2xl p-4 sm:p-5 text-xs sm:text-sm space-y-1.5">
+            <div class="font-bold">
+              <span class="lang-fr">Repère Lycéen / Débutant — VMware Bridged</span>
+              <span class="lang-en">High School / Beginner Guide — VMware Bridged</span>
+            </div>
+            <p class="leading-relaxed">
+              <span class="lang-fr"><strong>Action :</strong> Choisissez <em>Bridged</em> dans les réglages réseau de la VM. <strong>Pourquoi :</strong> La VM agit comme un ordinateur séparé sur votre réseau local. <strong>Contrôle :</strong> Debian reçoit une adresse IP locale de type <code class="px-1 py-0.5 rounded bg-black/10 dark:bg-white/10">192.168.1.x</code>.</span>
+              <span class="lang-en"><strong>Action:</strong> Select <em>Bridged</em> in the VM network settings. <strong>Why:</strong> The VM joins your LAN like a standalone machine. <strong>Check:</strong> Debian gets a local IP such as <code class="px-1 py-0.5 rounded bg-black/10 dark:bg-white/10">192.168.1.x</code>.</span>
+            </p>
+          </div>
+        </section>
+
+        <!-- LAB 2: SNAPSHOTS & ROLLBACK -->
+        <section id="lab-2" data-searchable class="rounded-3xl p-6 sm:p-8 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs space-y-5">
+          <div>
+            <span class="text-xs font-mono font-bold uppercase tracking-wider text-brand-600 dark:text-brand-400">
+              <span class="lang-fr">Atelier L2</span>
+              <span class="lang-en">Lab L2</span>
+            </span>
+            <h2 class="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white mt-0.5">
+              <span class="lang-fr">Snapshots VMware : prendre un instantané et revenir en arrière</span>
+              <span class="lang-en">VMware Snapshots: Taking &amp; Reverting State</span>
+            </h2>
+          </div>
+
+          <ol class="list-decimal list-inside space-y-2 text-xs sm:text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+            <li>
+              <span class="lang-fr">Avant d'éditer <code class="text-brand-700 dark:text-brand-300">/etc/network/interfaces</code> ou de lancer Docker, cliquez sur <strong>VM &gt; Snapshot &gt; Take Snapshot</strong> et nommez l'état (ex. <code class="text-brand-700 dark:text-brand-300">01-debian-ssh-clean</code>).</span>
+              <span class="lang-en">Before editing <code class="text-brand-700 dark:text-brand-300">/etc/network/interfaces</code> or starting Docker, click <strong>VM &gt; Snapshot &gt; Take Snapshot</strong> and label it (e.g., <code class="text-brand-700 dark:text-brand-300">01-debian-ssh-clean</code>).</span>
+            </li>
+            <li>
+              <span class="lang-fr">Si une modification casse la VM, sélectionnez l'instantané valide puis cliquez sur <strong>Revert to Snapshot</strong>.</span>
+              <span class="lang-en">If a change breaks the VM, pick your clean snapshot and click <strong>Revert to Snapshot</strong>.</span>
+            </li>
+          </ol>
+
+          <!-- Screen Mockup: Snapshot Manager -->
+          <div class="rounded-2xl border border-slate-700 bg-slate-950 p-4 text-slate-100 font-mono text-xs space-y-2">
+            <div class="text-slate-400 border-b border-slate-800 pb-1.5 flex justify-between">
+              <span>VMware Snapshot Manager</span>
+              <span class="text-sky-400">assets/screens/vmware-snapshot.png</span>
+            </div>
+            <div class="p-2.5 rounded-lg bg-slate-900 border border-emerald-600/50 text-emerald-300">
+              ● 01-debian-ssh-clean (Saved before static IP &amp; Docker)
+            </div>
+            <div class="pl-4 text-slate-400">
+              └── You Are Here → [Take Snapshot] [Revert to Snapshot]
+            </div>
+          </div>
+
+          <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-dashed border-slate-300 dark:border-slate-700 space-y-2.5">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <span class="text-xs font-semibold text-slate-700 dark:text-slate-200">
+                <span class="lang-fr">Aperçu local d'une capture Snapshot (non enregistré dans localStorage)</span>
+                <span class="lang-en">Local Snapshot Screenshot Preview (not stored in localStorage)</span>
+              </span>
+              <input type="file" accept="image/*" data-lab-slot="lab-2" class="lab-file-input text-xs text-slate-600 dark:text-slate-300 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-brand-600 file:text-white hover:file:bg-brand-700 cursor-pointer" />
+            </div>
+            <div data-lab-preview="lab-2" class="hidden">
+              <img alt="Snapshot manager local preview" class="max-h-64 rounded-xl border border-slate-200 dark:border-slate-700 object-contain bg-white" />
+            </div>
+          </div>
+
+          <div class="student-detail rounded-2xl p-4 sm:p-5 text-xs sm:text-sm space-y-1.5">
+            <div class="font-bold">
+              <span class="lang-fr">Repère Lycéen / Débutant — Snapshots</span>
+              <span class="lang-en">High School / Beginner Guide — Snapshots</span>
+            </div>
+            <p class="leading-relaxed">
+              <span class="lang-fr"><strong>Action :</strong> Créez un Snapshot à chaque étape réussie. <strong>Pourquoi :</strong> Vous pouvez revenir en arrière sans réinstaller Debian. <strong>Contrôle :</strong> L'instantané apparaît dans le gestionnaire de snapshots VMware.</span>
+              <span class="lang-en"><strong>Action:</strong> Take a Snapshot after each working milestone. <strong>Why:</strong> You can roll back without reinstalling Debian. <strong>Check:</strong> The snapshot appears in VMware's Snapshot Manager.</span>
+            </p>
+          </div>
+        </section>
+
+        <!-- LAB 3: DEBIAN 12 VM CREATION & SSH -->
+        <section id="lab-3" data-searchable class="rounded-3xl p-6 sm:p-8 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs space-y-5">
+          <div>
+            <span class="text-xs font-mono font-bold uppercase tracking-wider text-brand-600 dark:text-brand-400">
+              <span class="lang-fr">Atelier L3</span>
+              <span class="lang-en">Lab L3</span>
+            </span>
+            <h2 class="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white mt-0.5">
+              <span class="lang-fr">Créer la VM Debian 12 et activer SSH server</span>
+              <span class="lang-en">Create Debian 12 VM &amp; Enable SSH Server</span>
+            </h2>
+          </div>
+
+          <p class="text-xs sm:text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+            <span class="lang-fr">Montez l'ISO Debian 12 Netinst, effectuez l'installation guidée, puis cochez <strong>SSH server</strong> et <strong>standard system utilities</strong> à l'étape <em>Software selection</em>.</span>
+            <span class="lang-en">Attach the Debian 12 Netinst ISO, complete guided setup, and check <strong>SSH server</strong> plus <strong>standard system utilities</strong> during <em>Software selection</em>.</span>
+          </p>
+
+          <!-- Screen Mockup: Debian Software Selection -->
+          <div class="rounded-2xl border border-slate-700 bg-black p-4 font-mono text-xs text-slate-200 space-y-1">
+            <div class="text-slate-500 pb-1 border-b border-slate-900 flex justify-between">
+              <span>Debian 12 Netinst — Software selection</span>
+              <span class="text-sky-400">assets/screens/debian-ssh-select.png</span>
+            </div>
+            <div>[ ] Debian desktop environment</div>
+            <div class="text-emerald-400 font-bold">[*] SSH server</div>
+            <div class="text-emerald-400 font-bold">[*] standard system utilities</div>
+          </div>
+
+          <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-dashed border-slate-300 dark:border-slate-700 space-y-2.5">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <span class="text-xs font-semibold text-slate-700 dark:text-slate-200">
+                <span class="lang-fr">Aperçu local d'une capture Debian 12 (non enregistré dans localStorage)</span>
+                <span class="lang-en">Local Debian 12 Screenshot Preview (not stored in localStorage)</span>
+              </span>
+              <input type="file" accept="image/*" data-lab-slot="lab-3" class="lab-file-input text-xs text-slate-600 dark:text-slate-300 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-brand-600 file:text-white hover:file:bg-brand-700 cursor-pointer" />
+            </div>
+            <div data-lab-preview="lab-3" class="hidden">
+              <img alt="Debian installer local preview" class="max-h-64 rounded-xl border border-slate-200 dark:border-slate-700 object-contain bg-white" />
+            </div>
+          </div>
+
+          <div class="student-detail rounded-2xl p-4 sm:p-5 text-xs sm:text-sm space-y-1.5">
+            <div class="font-bold">
+              <span class="lang-fr">Repère Lycéen / Débutant — SSH server</span>
+              <span class="lang-en">High School / Beginner Guide — SSH server</span>
+            </div>
+            <p class="leading-relaxed">
+              <span class="lang-fr"><strong>Action :</strong> Utilisez la barre d'Espace pour cocher <code class="px-1 py-0.5 rounded bg-black/10 dark:bg-white/10">[*] SSH server</code> avant de valider. <strong>Pourquoi :</strong> Cela permet de piloter la VM depuis votre PC avec PuTTY ou Windows Terminal. <strong>Contrôle :</strong> Après redémarrage, le service SSH écoute sur le port 22.</span>
+              <span class="lang-en"><strong>Action:</strong> Press Space to select <code class="px-1 py-0.5 rounded bg-black/10 dark:bg-white/10">[*] SSH server</code> before continuing. <strong>Why:</strong> It lets you manage the VM remotely from your PC using PuTTY or Windows Terminal. <strong>Check:</strong> After reboot, SSH listens on port 22.</span>
+            </p>
+          </div>
+        </section>
+
+        <!-- LAB 4: BOX PORT FORWARDING ACROSS LIVEBOX / FREEBOX / BBOX / SFR + CGNAT & 4G/NAT LOOPBACK -->
+        <section id="lab-4" data-searchable class="rounded-3xl p-6 sm:p-8 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs space-y-5">
+          <div>
+            <span class="text-xs font-mono font-bold uppercase tracking-wider text-brand-600 dark:text-brand-400">
+              <span class="lang-fr">Atelier L4</span>
+              <span class="lang-en">Lab L4</span>
+            </span>
+            <h2 class="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white mt-0.5">
+              <span class="lang-fr">Port Forwarding sur Livebox, Freebox, Bbox, SFR &amp; tests CGNAT / 4G / NAT Loopback</span>
+              <span class="lang-en">Port Forwarding on Livebox, Freebox, Bbox, SFR &amp; CGNAT / 4G / NAT Loopback</span>
+            </h2>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs sm:text-sm">
+            <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
+              <div class="font-bold text-slate-900 dark:text-white">Livebox</div>
+              <p class="mt-1 text-slate-600 dark:text-slate-300">
+                <span class="lang-fr">Paramètres avancés &gt; NAT/PAT → règles TCP <code class="text-brand-700 dark:text-brand-300">80</code> et <code class="text-brand-700 dark:text-brand-300">443</code> vers <code class="text-brand-700 dark:text-brand-300">192.168.1.50</code>.</span>
+                <span class="lang-en">Advanced Settings &gt; NAT/PAT → TCP rules <code class="text-brand-700 dark:text-brand-300">80</code> and <code class="text-brand-700 dark:text-brand-300">443</code> to <code class="text-brand-700 dark:text-brand-300">192.168.1.50</code>.</span>
+              </p>
+            </div>
+            <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
+              <div class="font-bold text-slate-900 dark:text-white">Freebox</div>
+              <p class="mt-1 text-slate-600 dark:text-slate-300">
+                <span class="lang-fr">Paramètres de la Freebox &gt; Mode avancé &gt; Gestion des ports → TCP <code class="text-brand-700 dark:text-brand-300">80</code> et <code class="text-brand-700 dark:text-brand-300">443</code> vers l'IP de la VM (vérifier l'IPv4 full-stack si CGNAT).</span>
+                <span class="lang-en">Freebox Settings &gt; Advanced Mode &gt; Port Management → TCP <code class="text-brand-700 dark:text-brand-300">80</code> and <code class="text-brand-700 dark:text-brand-300">443</code> to VM IP (check full-stack IPv4 if behind CGNAT).</span>
+              </p>
+            </div>
+            <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
+              <div class="font-bold text-slate-900 dark:text-white">Bbox</div>
+              <p class="mt-1 text-slate-600 dark:text-slate-300">
+                <span class="lang-fr">Ma Bbox &gt; Redirection de ports → créer les entrées TCP <code class="text-brand-700 dark:text-brand-300">80</code> et <code class="text-brand-700 dark:text-brand-300">443</code> vers l'IP statique de la VM.</span>
+                <span class="lang-en">My Bbox &gt; Port Forwarding → add TCP <code class="text-brand-700 dark:text-brand-300">80</code> and <code class="text-brand-700 dark:text-brand-300">443</code> entries pointing to the VM's static IP.</span>
+              </p>
+            </div>
+            <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
+              <div class="font-bold text-slate-900 dark:text-white">SFR / Routeur</div>
+              <p class="mt-1 text-slate-600 dark:text-slate-300">
+                <span class="lang-fr">Réseau &gt; NAT / Redirection de ports → TCP <code class="text-brand-700 dark:text-brand-300">80</code> et <code class="text-brand-700 dark:text-brand-300">443</code> vers la VM ; tester en 4G/5G puis vérifier le <em>NAT loopback</em>.</span>
+                <span class="lang-en">Network &gt; NAT / Port Forwarding → TCP <code class="text-brand-700 dark:text-brand-300">80</code> and <code class="text-brand-700 dark:text-brand-300">443</code> to VM; test on 4G/5G and verify <em>NAT loopback</em>.</span>
+              </p>
+            </div>
+          </div>
+
+          <!-- Screen Mockup: NAT Table -->
+          <div class="rounded-2xl border border-slate-700 bg-slate-950 p-4 text-slate-100 font-mono text-xs space-y-2">
+            <div class="text-slate-400 border-b border-slate-800 pb-1.5 flex justify-between">
+              <span>Router NAT Table (assets/screens/router-nat-80-443.png)</span>
+              <span class="text-emerald-400">80 &amp; 443 → 192.168.1.50</span>
+            </div>
+            <div>TCP | Ext: 80  → Int: 192.168.1.50 : 80</div>
+            <div>TCP | Ext: 443 → Int: 192.168.1.50 : 443</div>
+          </div>
+
+          <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-dashed border-slate-300 dark:border-slate-700 space-y-2.5">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <span class="text-xs font-semibold text-slate-700 dark:text-slate-200">
+                <span class="lang-fr">Aperçu local d'une capture Box NAT (non enregistré dans localStorage)</span>
+                <span class="lang-en">Local Router NAT Screenshot Preview (not stored in localStorage)</span>
+              </span>
+              <input type="file" accept="image/*" data-lab-slot="lab-4" class="lab-file-input text-xs text-slate-600 dark:text-slate-300 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-brand-600 file:text-white hover:file:bg-brand-700 cursor-pointer" />
+            </div>
+            <div data-lab-preview="lab-4" class="hidden">
+              <img alt="Router NAT local preview" class="max-h-64 rounded-xl border border-slate-200 dark:border-slate-700 object-contain bg-white" />
+            </div>
+          </div>
+
+          <div class="student-detail rounded-2xl p-4 sm:p-5 text-xs sm:text-sm space-y-1.5">
+            <div class="font-bold">
+              <span class="lang-fr">Repère Lycéen / Débutant — CGNAT, 4G/5G &amp; NAT Loopback</span>
+              <span class="lang-en">High School / Beginner Guide — CGNAT, 4G/5G &amp; NAT Loopback</span>
+            </div>
+            <p class="leading-relaxed">
+              <span class="lang-fr"><strong>Action :</strong> Testez votre URL en 4G/5G sur votre téléphone. <strong>Pourquoi :</strong> En 4G/5G vous êtes hors de votre Wi-Fi local, ce qui évite les faux positifs liés au <em>NAT loopback</em> ou au CGNAT. <strong>Contrôle :</strong> La page HTTPS répond depuis la 4G/5G.</span>
+              <span class="lang-en"><strong>Action:</strong> Test your URL on mobile 4G/5G. <strong>Why:</strong> 4G/5G tests from outside your LAN, avoiding confusion from missing <em>NAT loopback</em> or CGNAT. <strong>Check:</strong> The HTTPS site loads over 4G/5G.</span>
+            </p>
+          </div>
+        </section>
+
+        <!-- LAB 5: PUTTY & WINDOWS TERMINAL SSH -->
+        <section id="lab-5" data-searchable class="rounded-3xl p-6 sm:p-8 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs space-y-5">
+          <div>
+            <span class="text-xs font-mono font-bold uppercase tracking-wider text-brand-600 dark:text-brand-400">
+              <span class="lang-fr">Atelier L5</span>
+              <span class="lang-en">Lab L5</span>
+            </span>
+            <h2 class="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white mt-0.5">
+              <span class="lang-fr">Utiliser PuTTY ou Windows Terminal SSH</span>
+              <span class="lang-en">Using PuTTY or Windows Terminal SSH</span>
+            </h2>
+          </div>
+
+          <p class="text-xs sm:text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+            <span class="lang-fr">Dans PuTTY, saisissez l'IP de la VM (<code class="text-brand-700 dark:text-brand-300">192.168.1.50</code>), port <code class="text-brand-700 dark:text-brand-300">22</code>, type <strong>SSH</strong>, cliquez sur <em>Open</em> (clic droit pour coller). Ou utilisez directement Windows Terminal :</span>
+            <span class="lang-en">In PuTTY, enter the VM IP (<code class="text-brand-700 dark:text-brand-300">192.168.1.50</code>), port <code class="text-brand-700 dark:text-brand-300">22</code>, type <strong>SSH</strong>, click <em>Open</em> (right-click pastes). Or run directly in Windows Terminal:</span>
+          </p>
+
+          <div class="rounded-2xl overflow-hidden border border-slate-800 bg-slate-950">
+            <div class="flex items-center justify-between px-4 py-2.5 bg-slate-900 border-b border-slate-800">
+              <span class="text-xs font-mono text-slate-400">powershell — SSH</span>
+              <button type="button" class="copy-btn px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-800 text-slate-200 hover:bg-brand-600 hover:text-white transition">Copier</button>
+            </div>
+            <pre class="p-4 text-xs sm:text-sm text-slate-100 overflow-x-auto"><code>ssh admin-cloud@192.168.1.50</code></pre>
+          </div>
+
+          <!-- Screen Mockup: PuTTY -->
+          <div class="rounded-2xl border border-slate-700 bg-slate-950 p-4 font-mono text-xs text-slate-200 space-y-1.5">
+            <div class="text-slate-400 border-b border-slate-800 pb-1.5 flex justify-between">
+              <span>PuTTY (assets/screens/putty-ssh.png)</span>
+              <span class="text-sky-400">SSH : 22</span>
+            </div>
+            <div>Host Name: <span class="text-sky-300">192.168.1.50</span> | Port: 22 | Connection type: SSH</div>
+            <div class="text-emerald-400 pt-1">$ docker compose ps</div>
+          </div>
+
+          <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-dashed border-slate-300 dark:border-slate-700 space-y-2.5">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <span class="text-xs font-semibold text-slate-700 dark:text-slate-200">
+                <span class="lang-fr">Aperçu local d'une capture PuTTY / SSH (non enregistré dans localStorage)</span>
+                <span class="lang-en">Local PuTTY / SSH Screenshot Preview (not stored in localStorage)</span>
+              </span>
+              <input type="file" accept="image/*" data-lab-slot="lab-5" class="lab-file-input text-xs text-slate-600 dark:text-slate-300 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-brand-600 file:text-white hover:file:bg-brand-700 cursor-pointer" />
+            </div>
+            <div data-lab-preview="lab-5" class="hidden">
+              <img alt="PuTTY local preview" class="max-h-64 rounded-xl border border-slate-200 dark:border-slate-700 object-contain bg-white" />
+            </div>
+          </div>
+
+          <div class="student-detail rounded-2xl p-4 sm:p-5 text-xs sm:text-sm space-y-1.5">
+            <div class="font-bold">
+              <span class="lang-fr">Repère Lycéen / Débutant — Mot de passe invisible en SSH</span>
+              <span class="lang-en">High School / Beginner Guide — Hidden Password in SSH</span>
+            </div>
+            <p class="leading-relaxed">
+              <span class="lang-fr"><strong>Action :</strong> Tapez votre mot de passe puis appuyez sur Entrée même si aucun caractère n'apparaît. <strong>Pourquoi :</strong> Linux masque les caractères du mot de passe par sécurité. <strong>Contrôle :</strong> L'invite <code class="px-1 py-0.5 rounded bg-black/10 dark:bg-white/10">user@debian:~$</code> s'affiche.</span>
+              <span class="lang-en"><strong>Action:</strong> Type your password and press Enter even though no dots or characters appear. <strong>Why:</strong> Linux hides password characters for security. <strong>Check:</strong> You see the <code class="px-1 py-0.5 rounded bg-black/10 dark:bg-white/10">user@debian:~$</code> shell prompt.</span>
+            </p>
+          </div>
+        </section>
+
+        <!-- LAB 6: NGINX PROXY MANAGER SETUP & SCREENSHOT WORKFLOW -->
+        <section id="lab-6" data-searchable class="rounded-3xl p-6 sm:p-8 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs space-y-5">
+          <div>
+            <span class="text-xs font-mono font-bold uppercase tracking-wider text-brand-600 dark:text-brand-400">
+              <span class="lang-fr">Atelier L6</span>
+              <span class="lang-en">Lab L6</span>
+            </span>
+            <h2 class="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white mt-0.5">
+              <span class="lang-fr">Configurer Nginx Proxy Manager &amp; publier les captures dans assets/screens/</span>
+              <span class="lang-en">Configure Nginx Proxy Manager &amp; Publish Screenshots in assets/screens/</span>
+            </h2>
+          </div>
+
+          <p class="text-xs sm:text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+            <span class="lang-fr">Dans NPM (<code class="text-brand-700 dark:text-brand-300">http://192.168.1.50:81</code>), créez le Proxy Host vers <code class="text-brand-700 dark:text-brand-300">nextcloud-app:80</code> et activez Let's Encrypt. Pour partager de vraies captures d'écran sur GitHub Pages, placez vos fichiers dans <code class="text-brand-700 dark:text-brand-300">assets/screens/</code>.</span>
+            <span class="lang-en">In NPM (<code class="text-brand-700 dark:text-brand-300">http://192.168.1.50:81</code>), add the Proxy Host to <code class="text-brand-700 dark:text-brand-300">nextcloud-app:80</code> and enable Let's Encrypt. To share real screenshots on GitHub Pages, commit image files inside <code class="text-brand-700 dark:text-brand-300">assets/screens/</code>.</span>
+          </p>
+
+          <!-- Screen Mockup: NPM Proxy Host -->
+          <div class="rounded-2xl border border-slate-700 bg-slate-950 p-4 font-mono text-xs text-slate-200 space-y-1.5">
+            <div class="text-slate-400 border-b border-slate-800 pb-1.5 flex justify-between">
+              <span>Nginx Proxy Manager (assets/screens/npm-proxy-host.png)</span>
+              <span class="text-emerald-400">SSL Enabled</span>
+            </div>
+            <div>Domain: <span class="text-sky-300">mon-cloud-perso.duckdns.org</span></div>
+            <div>Forward: <span class="text-emerald-300">http://nextcloud-app:80</span> | Force SSL: ON</div>
+          </div>
+
+          <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-dashed border-slate-300 dark:border-slate-700 space-y-2.5">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <span class="text-xs font-semibold text-slate-700 dark:text-slate-200">
+                <span class="lang-fr">Aperçu local d'une capture NPM (non enregistré dans localStorage)</span>
+                <span class="lang-en">Local NPM Screenshot Preview (not stored in localStorage)</span>
+              </span>
+              <input type="file" accept="image/*" data-lab-slot="lab-6" class="lab-file-input text-xs text-slate-600 dark:text-slate-300 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-brand-600 file:text-white hover:file:bg-brand-700 cursor-pointer" />
+            </div>
+            <div data-lab-preview="lab-6" class="hidden">
+              <img alt="NPM proxy host local preview" class="max-h-64 rounded-xl border border-slate-200 dark:border-slate-700 object-contain bg-white" />
+            </div>
+          </div>
+
+          <div class="student-detail rounded-2xl p-4 sm:p-5 text-xs sm:text-sm space-y-1.5">
+            <div class="font-bold">
+              <span class="lang-fr">Repère Lycéen / Débutant — Captures locales vs GitHub Pages</span>
+              <span class="lang-en">High School / Beginner Guide — Local Previews vs. GitHub Pages</span>
+            </div>
+            <p class="leading-relaxed">
+              <span class="lang-fr"><strong>Action :</strong> Utilisez l'aperçu local pour vérifier vos captures, puis copiez vos PNG/JPG dans <code class="px-1 py-0.5 rounded bg-black/10 dark:bg-white/10">assets/screens/</code> sur GitHub. <strong>Pourquoi :</strong> L'aperçu local n'est visible que sur votre poste et n'encombre pas <code class="px-1 py-0.5 rounded bg-black/10 dark:bg-white/10">localStorage</code>. <strong>Contrôle :</strong> Vos images dans <code class="px-1 py-0.5 rounded bg-black/10 dark:bg-white/10">assets/screens/</code> sont poussées sur le dépôt.</span>
+              <span class="lang-en"><strong>Action:</strong> Test screenshots with the local preview, then add your PNG/JPG files to <code class="px-1 py-0.5 rounded bg-black/10 dark:bg-white/10">assets/screens/</code> in GitHub. <strong>Why:</strong> Local previews stay in your browser only and avoid bloating <code class="px-1 py-0.5 rounded bg-black/10 dark:bg-white/10">localStorage</code>. <strong>Check:</strong> Your files under <code class="px-1 py-0.5 rounded bg-black/10 dark:bg-white/10">assets/screens/</code> are committed to the repository.</span>
+            </p>
+          </div>
+        </section>
+      </div>
+
+      <!-- ================================================================= -->
+      <!-- SHARED VERIFICATION CHECKLIST (PERSISTED IN LOCALSTORAGE)         -->
+      <!-- ================================================================= -->
+      <section id="checklist-summary" class="rounded-3xl p-6 sm:p-8 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs space-y-4">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 class="text-lg sm:text-xl font-bold text-slate-900 dark:text-white">
+              <span class="lang-fr">Checklist de vérification</span>
+              <span class="lang-en">Deployment Verification Checklist</span>
+            </h2>
+            <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
+              <span class="lang-fr">Sauvegardée automatiquement dans votre navigateur (<code class="text-brand-700 dark:text-brand-300">localStorage</code>).</span>
+              <span class="lang-en">Automatically saved in your browser (<code class="text-brand-700 dark:text-brand-300">localStorage</code>).</span>
+            </p>
+          </div>
+          <div class="flex items-center gap-3">
+            <span id="summary-counter" class="text-sm font-mono font-bold text-brand-600 dark:text-brand-400">0 / 9</span>
+            <button
+              id="reset-checklist"
+              type="button"
+              class="px-3 py-1.5 rounded-xl text-xs font-semibold border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+            >
+              <span class="lang-fr">Réinitialiser</span>
+              <span class="lang-en">Reset</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="w-full h-2.5 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+          <div id="progress-bar" class="h-full bg-brand-600 dark:bg-brand-400 transition-all duration-300" style="width: 0%"></div>
+        </div>
+
+        <ul id="summary-list" class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-2 text-xs sm:text-sm"></ul>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- INTERACTIVE SCRIPTS                                                  -->
+  <!-- ===================================================================== -->
+  <script>
+    (function () {
+      const htmlEl = document.documentElement;
+      const bodyEl = document.body;
+
+      // Persistence keys
+      const KEY_LANG = 'nc_wiki_lang_v2';
+      const KEY_STUDENT = 'nc_wiki_student_v2';
+      const KEY_THEME = 'nc_wiki_theme_v2';
+      const KEY_STEPS = 'nc_wiki_steps_v2';
+      const KEY_VIEW = 'nc_wiki_view_v2';
+
+      const searchInput = document.getElementById('wiki-search');
+      const clearSearchBtn = document.getElementById('clear-search');
+      const searchStatus = document.getElementById('search-status');
+
+      // 1. Dual-view switcher (Wiki Technique | Atelier Pratique)
+      const viewWikiEl = document.getElementById('view-wiki');
+      const viewLabEl = document.getElementById('view-lab');
+      const tocWikiEl = document.getElementById('toc-wiki');
+      const tocLabEl = document.getElementById('toc-lab');
+      const tabButtons = document.querySelectorAll('.view-tab-btn');
+
+      function setActiveView(viewName) {
+        const isLab = viewName === 'lab';
+        try {
+          localStorage.setItem(KEY_VIEW, isLab ? 'lab' : 'wiki');
+        } catch (_) {}
+
+        if (viewWikiEl) viewWikiEl.classList.toggle('hidden', isLab);
+        if (viewLabEl) viewLabEl.classList.toggle('hidden', !isLab);
+        if (tocWikiEl) tocWikiEl.classList.toggle('hidden', isLab);
+        if (tocLabEl) tocLabEl.classList.toggle('hidden', !isLab);
+
+        tabButtons.forEach((btn) => {
+          const active = btn.dataset.viewTab === (isLab ? 'lab' : 'wiki');
+          btn.setAttribute('aria-selected', active ? 'true' : 'false');
+          btn.classList.toggle('bg-white', active);
+          btn.classList.toggle('dark:bg-slate-900', active);
+          btn.classList.toggle('text-brand-600', active);
+          btn.classList.toggle('dark:text-brand-400', active);
+          btn.classList.toggle('shadow-xs', active);
+          btn.classList.toggle('text-slate-600', !active);
+          btn.classList.toggle('dark:text-slate-400', !active);
+        });
+
+        applySearchFilter();
+        highlightActiveToc();
+      }
+
+      tabButtons.forEach((btn) => {
+        btn.addEventListener('click', () => setActiveView(btn.dataset.viewTab));
+      });
+
+      // 2. Bilingual toggle (FR | EN)
+      const langButtons = document.querySelectorAll('.lang-btn');
+
+      function setLanguage(lang) {
+        const targetLang = lang === 'en' ? 'en' : 'fr';
+        htmlEl.setAttribute('lang', targetLang);
+        try {
+          localStorage.setItem(KEY_LANG, targetLang);
+        } catch (_) {}
+
+        langButtons.forEach((btn) => {
+          const active = btn.dataset.langChoice === targetLang;
+          btn.classList.toggle('bg-white', active);
+          btn.classList.toggle('dark:bg-slate-900', active);
+          btn.classList.toggle('text-brand-600', active);
+          btn.classList.toggle('dark:text-brand-400', active);
+          btn.classList.toggle('shadow-xs', active);
+          btn.classList.toggle('text-slate-500', !active);
+          btn.classList.toggle('dark:text-slate-400', !active);
+        });
+
+        if (searchInput) {
+          searchInput.placeholder = targetLang === 'en'
+            ? 'Filter (Debian, 443, PuTTY...)'
+            : 'Filtrer (Debian, 443, PuTTY...)';
+        }
+
+        document.title = targetLang === 'en'
+          ? 'Nextcloud Wiki: End-to-End Deployment | nextcloud-wiki.mohamedharmouche.fr'
+          : 'Wiki Nextcloud : Déploiement de A à Z | nextcloud-wiki.mohamedharmouche.fr';
+
+        updateCopyLabels();
+        renderChecklist();
+        applySearchFilter();
+      }
+
+      langButtons.forEach((btn) => {
+        btn.addEventListener('click', () => setLanguage(btn.dataset.langChoice));
+      });
+
+      // 3. Mode Lycéen / Débutant toggle (.student-mode on body)
+      const studentToggle = document.getElementById('student-toggle');
+
+      function setStudentMode(enabled) {
+        const active = Boolean(enabled);
+        bodyEl.classList.toggle('student-mode', active);
+        try {
+          localStorage.setItem(KEY_STUDENT, active ? 'true' : 'false');
+        } catch (_) {}
+
+        if (studentToggle) {
+          studentToggle.setAttribute('aria-pressed', active ? 'true' : 'false');
+          studentToggle.classList.toggle('bg-amber-500', active);
+          studentToggle.classList.toggle('dark:bg-amber-500', active);
+          studentToggle.classList.toggle('text-white', active);
+          studentToggle.classList.toggle('dark:text-slate-950', active);
+          studentToggle.classList.toggle('border-amber-500', active);
+
+          studentToggle.classList.toggle('bg-amber-50', !active);
+          studentToggle.classList.toggle('dark:bg-amber-950/40', !active);
+          studentToggle.classList.toggle('text-amber-800', !active);
+          studentToggle.classList.toggle('dark:text-amber-300', !active);
+          studentToggle.classList.toggle('border-amber-300/80', !active);
+          studentToggle.classList.toggle('dark:border-amber-700/70', !active);
+        }
+      }
+
+      if (studentToggle) {
+        studentToggle.addEventListener('click', () => {
+          setStudentMode(!bodyEl.classList.contains('student-mode'));
+        });
+      }
+
+      // 4. Dark / Light mode toggle
+      const themeToggle = document.getElementById('theme-toggle');
+
+      function setTheme(theme) {
+        const isDark = theme === 'dark';
+        htmlEl.classList.toggle('dark', isDark);
+        try {
+          localStorage.setItem(KEY_THEME, isDark ? 'dark' : 'light');
+        } catch (_) {}
+      }
+
+      if (themeToggle) {
+        themeToggle.addEventListener('click', () => {
+          setTheme(htmlEl.classList.contains('dark') ? 'light' : 'dark');
+        });
+      }
+
+      // 5. Copy buttons on every code block
+      function updateCopyLabels() {
+        const lang = htmlEl.getAttribute('lang') || 'fr';
+        document.querySelectorAll('.copy-btn').forEach((btn) => {
+          if (btn.dataset.copied === 'true') {
+            btn.textContent = lang === 'en' ? 'Copied!' : 'Copié !';
+          } else {
+            btn.textContent = lang === 'en' ? 'Copy' : 'Copier';
+          }
+        });
+      }
+
+      document.querySelectorAll('.copy-btn').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const card = btn.closest('.rounded-2xl');
+          const codeEl = card ? card.querySelector('pre code') : null;
+          if (!codeEl) return;
+
+          const text = codeEl.innerText;
+          const lang = htmlEl.getAttribute('lang') || 'fr';
+
+          const onSuccess = () => {
+            btn.dataset.copied = 'true';
+            btn.textContent = lang === 'en' ? 'Copied!' : 'Copié !';
+            btn.classList.add('bg-emerald-600', 'text-white');
+            setTimeout(() => {
+              btn.dataset.copied = 'false';
+              btn.textContent = lang === 'en' ? 'Copy' : 'Copier';
+              btn.classList.remove('bg-emerald-600', 'text-white');
+            }, 1500);
+          };
+
+          if (navigator.clipboard && window.isSecureContext) {
+            navigator.clipboard.writeText(text).then(onSuccess).catch(() => fallbackCopy(text, onSuccess));
+          } else {
+            fallbackCopy(text, onSuccess);
+          }
+        });
+      });
+
+      function fallbackCopy(text, onSuccess) {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        try {
+          document.execCommand('copy');
+          onSuccess();
+        } catch (_) {}
+        document.body.removeChild(ta);
+      }
+
+      // 6. Verification Checklist persisted in localStorage
+      const stepCheckboxes = document.querySelectorAll('.step-checkbox');
+      const summaryList = document.getElementById('summary-list');
+      const summaryCounter = document.getElementById('summary-counter');
+      const progressBadge = document.getElementById('progress-badge');
+      const progressBar = document.getElementById('progress-bar');
+      const resetChecklistBtn = document.getElementById('reset-checklist');
+
+      let stepState = {};
+      try {
+        stepState = JSON.parse(localStorage.getItem(KEY_STEPS) || '{}');
+      } catch (_) {
+        stepState = {};
+      }
+
+      function persistSteps() {
+        try {
+          localStorage.setItem(KEY_STEPS, JSON.stringify(stepState));
+        } catch (_) {}
+      }
+
+      stepCheckboxes.forEach((cb) => {
+        const key = cb.dataset.stepKey;
+        cb.checked = Boolean(stepState[key]);
+        cb.addEventListener('change', () => {
+          stepState[key] = cb.checked;
+          persistSteps();
+          renderChecklist();
+        });
+      });
+
+      function renderChecklist() {
+        const lang = htmlEl.getAttribute('lang') || 'fr';
+        const sections = document.querySelectorAll('.wiki-section');
+        const total = sections.length;
+        let done = 0;
+
+        if (summaryList) summaryList.innerHTML = '';
+
+        sections.forEach((sec, index) => {
+          const cb = sec.querySelector('.step-checkbox');
+          const key = cb ? cb.dataset.stepKey : `wiki-${index + 1}`;
+          const isDone = Boolean(stepState[key]);
+          if (isDone) done += 1;
+
+          const heading = sec.querySelector(`h2 .lang-${lang}`) || sec.querySelector('h2');
+          const labelText = heading ? heading.textContent.trim() : `Step ${index + 1}`;
+
+          if (summaryList) {
+            const li = document.createElement('li');
+            li.className = `flex items-center justify-between gap-2 px-3.5 py-2.5 rounded-xl border ${
+              isDone
+                ? 'bg-emerald-50/70 dark:bg-emerald-950/25 border-emerald-200 dark:border-emerald-800/70 text-emerald-900 dark:text-emerald-200'
+                : 'bg-slate-50 dark:bg-slate-800/50 border-slate-200/80 dark:border-slate-700/80 text-slate-600 dark:text-slate-300'
+            }`;
+
+            const lbl = document.createElement('label');
+            lbl.className = 'flex items-center gap-2.5 cursor-pointer min-w-0 flex-1';
+
+            const itemCb = document.createElement('input');
+            itemCb.type = 'checkbox';
+            itemCb.checked = isDone;
+            itemCb.className = 'rounded text-brand-600 focus:ring-brand-500 w-4 h-4 shrink-0';
+            itemCb.addEventListener('change', () => {
+              stepState[key] = itemCb.checked;
+              persistSteps();
+              if (cb) cb.checked = itemCb.checked;
+              renderChecklist();
+            });
+
+            const span = document.createElement('span');
+            span.className = `truncate ${isDone ? 'line-through opacity-75' : ''}`;
+            span.textContent = `${String(index + 1).padStart(2, '0')}. ${labelText}`;
+
+            lbl.appendChild(itemCb);
+            lbl.appendChild(span);
+            li.appendChild(lbl);
+            summaryList.appendChild(li);
+          }
+        });
+
+        const ratio = `${done} / ${total}`;
+        if (summaryCounter) summaryCounter.textContent = ratio;
+        if (progressBadge) progressBadge.textContent = ratio;
+        if (progressBar) {
+          const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+          progressBar.style.width = `${pct}%`;
+        }
+      }
+
+      if (resetChecklistBtn) {
+        resetChecklistBtn.addEventListener('click', () => {
+          stepState = {};
+          try {
+            localStorage.removeItem(KEY_STEPS);
+          } catch (_) {}
+          stepCheckboxes.forEach((cb) => {
+            cb.checked = false;
+          });
+          renderChecklist();
+        });
+      }
+
+      // 7. Instant search filter
+      function applySearchFilter() {
+        const query = (searchInput ? searchInput.value : '').trim().toLowerCase();
+        const activeView = viewLabEl && !viewLabEl.classList.contains('hidden') ? viewLabEl : viewWikiEl;
+        const items = activeView ? activeView.querySelectorAll('[data-searchable]') : [];
+        let matches = 0;
+
+        if (clearSearchBtn) {
+          clearSearchBtn.classList.toggle('hidden', query.length === 0);
+        }
+
+        items.forEach((el) => {
+          const ok = !query || el.textContent.toLowerCase().includes(query);
+          el.classList.toggle('search-hidden', !ok);
+          if (ok) matches += 1;
+        });
+
+        if (searchStatus) {
+          if (!query) {
+            searchStatus.classList.add('hidden');
+            searchStatus.textContent = '';
+          } else {
+            const lang = htmlEl.getAttribute('lang') || 'fr';
+            searchStatus.classList.remove('hidden');
+            searchStatus.textContent = lang === 'en'
+              ? `${matches} section(s) matching "${query}"`
+              : `${matches} section(s) pour "${query}"`;
+          }
+        }
+      }
+
+      if (searchInput) {
+        searchInput.addEventListener('input', applySearchFilter);
+      }
+
+      if (clearSearchBtn && searchInput) {
+        clearSearchBtn.addEventListener('click', () => {
+          searchInput.value = '';
+          applySearchFilter();
+          searchInput.focus();
+        });
+      }
+
+      // 8. Local screenshot preview uploader (in-memory only, never stored in localStorage)
+      document.querySelectorAll('.lab-file-input').forEach((input) => {
+        input.addEventListener('change', () => {
+          const slot = input.dataset.labSlot;
+          const previewBox = document.querySelector(`[data-lab-preview="${slot}"]`);
+          const img = previewBox ? previewBox.querySelector('img') : null;
+          const file = input.files && input.files[0];
+
+          if (!file || !previewBox || !img) {
+            if (previewBox) previewBox.classList.add('hidden');
+            return;
+          }
+
+          const reader = new FileReader();
+          reader.onload = (ev) => {
+            if (ev.target && typeof ev.target.result === 'string') {
+              img.src = ev.target.result;
+              previewBox.classList.remove('hidden');
+            }
+          };
+          reader.readAsDataURL(file);
+        });
+      });
+
+      // 9. Mobile drawer & TOC active state
+      const sidebar = document.getElementById('sidebar');
+      const sidebarToggle = document.getElementById('sidebar-toggle');
+      const sidebarBackdrop = document.getElementById('sidebar-backdrop');
+
+      function openSidebar() {
+        sidebar.classList.remove('-translate-x-full');
+        sidebarBackdrop.classList.remove('hidden');
+      }
+
+      function closeSidebar() {
+        sidebar.classList.add('-translate-x-full');
+        sidebarBackdrop.classList.add('hidden');
+      }
+
+      if (sidebarToggle) {
+        sidebarToggle.addEventListener('click', () => {
+          if (sidebar.classList.contains('-translate-x-full')) openSidebar();
+          else closeSidebar();
+        });
+      }
+
+      if (sidebarBackdrop) {
+        sidebarBackdrop.addEventListener('click', closeSidebar);
+      }
+
+      document.querySelectorAll('.toc-link').forEach((link) => {
+        link.addEventListener('click', () => {
+          if (window.innerWidth < 1024) closeSidebar();
+        });
+      });
+
+      const tocLinks = document.querySelectorAll('.toc-link[data-nav]');
+
+      function highlightActiveToc() {
+        const visibleSecs = Array.from(document.querySelectorAll('section[id]')).filter(
+          (el) => el.offsetParent !== null
+        );
+        const scrollPos = window.scrollY + 130;
+        let currentId = visibleSecs[0] ? visibleSecs[0].id : '';
+        for (const sec of visibleSecs) {
+          if (sec.offsetTop <= scrollPos) {
+            currentId = sec.id;
+          }
+        }
+        tocLinks.forEach((a) => {
+          const active = a.dataset.nav === currentId;
+          a.classList.toggle('bg-brand-50', active);
+          a.classList.toggle('dark:bg-brand-950/50', active);
+          a.classList.toggle('text-brand-700', active);
+          a.classList.toggle('dark:text-brand-300', active);
+          a.classList.toggle('font-semibold', active);
+        });
+      }
+
+      window.addEventListener('scroll', highlightActiveToc, { passive: true });
+
+      // Initial state hydration
+      let savedTheme = null;
+      let savedStudent = null;
+      let savedView = null;
+      let savedLang = null;
+
+      try {
+        savedTheme = localStorage.getItem(KEY_THEME);
+        savedStudent = localStorage.getItem(KEY_STUDENT);
+        savedView = localStorage.getItem(KEY_VIEW);
+        savedLang = localStorage.getItem(KEY_LANG);
+      } catch (_) {}
+
+      if (savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        setTheme('dark');
+      } else {
+        setTheme('light');
+      }
+
+      setStudentMode(savedStudent === 'true');
+      setActiveView(savedView === 'lab' ? 'lab' : 'wiki');
+      setLanguage(savedLang || 'fr');
+      highlightActiveToc();
+    })();
+  </script>
+</body>
+</html>
